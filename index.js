@@ -6,6 +6,7 @@ var crypto = require('crypto');
 var xml2js = require('xml2js');
 var request = require('request');
 var mime = require('mime');
+var Buffer = require("buffer").Buffer;
 
 var noop = function() {};
 
@@ -112,12 +113,23 @@ OssClient.prototype.getHeaders = function (method, metas, ossParams) {
   };
 
   if (ossParams.srcFile) {
-    headers['content-type'] = mime.lookup(path.extname(ossParams.srcFile));
-    headers['content-Length'] = fs.statSync(ossParams.srcFile).size;
-
     var md5 = crypto.createHash('md5');
-    md5.update(fs.readFileSync(ossParams.srcFile));
-    headers['content-Md5'] = md5.digest('hex');
+    headers['content-type'] = mime.lookup(path.extname(ossParams.srcFile));
+    if(Buffer.isBuffer(ossParams.srcFile)) {
+      headers['content-Length'] = ossParams.srcFile.length;
+      md5.update(ossParams.srcFile);
+      headers['content-Md5'] = md5.digest('hex');
+    } else if(ossParams.srcFile instanceof require("stream")) {
+      headers['content-Length'] = ossParams.contentLength;
+      if(ossParams.md5) {
+        headers['content-Md5'] = ossParams.md5;
+      }
+    } else {
+      headers['content-Length'] = fs.statSync(ossParams.srcFile).size;
+      //TODO: seems dangerous to calculate MD5 using sync methods
+      md5.update(fs.readFileSync(ossParams.srcFile));
+      headers['content-Md5'] = md5.digest('hex');
+    }
   }
   if (ossParams.isGroup) {
     headers['content-type'] = "txt/xml";
@@ -153,9 +165,13 @@ OssClient.prototype.doRequest = function (method, metas, ossParams, callback) {
   options.url = this.getUrl(ossParams);
   options.headers = this.getHeaders(method, metas, ossParams);
   options.timeout = this._timeout;
-
+  
   if (ossParams.isGroup) {
     options.body = this.getObjectGroupPostBody(ossParams.bucket, ossParams.objectArray);
+  }
+  
+  if(Buffer.isBuffer(ossParams.srcFile) && method === 'PUT') {
+    options.body = ossParams.srcFile;
   }
 
   var req = request(options, function (error, response, body) {
@@ -186,8 +202,15 @@ OssClient.prototype.doRequest = function (method, metas, ossParams, callback) {
 
   // put a file to oss
   if (ossParams.srcFile) {
-    var rstream = typeof ossParams.srcFile === "string" ?  fs.createReadStream(ossParams.srcFile) : ossParams.srcFile;
-    rstream.pipe(req);
+    var rstream;
+    if(ossParams.srcFile instanceof require("stream")) {//stream
+      rstream = ossParams.srcFile;
+    } else if(typeof ossParams.srcFile === "string") {//file path
+      rstream = fs.createReadStream(ossParams.srcFile);
+    }
+    if(rstream) {//if srcFile is a buffer, it will not enter
+      rstream.pipe(req);
+    }
   }
   // get a object from oss and save as a file
   if (ossParams.dstFile) {
@@ -280,15 +303,19 @@ OssClient.prototype.putObject = function (option, callback) {
   }
 
   var self = this;
+  var method = 'PUT';
   // var thisArguments = arguments;
-  fs.stat(option.srcFile, function(err/*, stats*/) {
-    if (err) {
-      return callback(err);
-    }
-    var method = 'PUT';
-
+  if(typeof option.srcFile === "string") {
+    fs.stat(option.srcFile, function(err/*, stats*/) {
+      if (err) {
+        return callback(err);
+      }
+      self.doRequest(method, null, option, callback);
+    });
+  } else {
     self.doRequest(method, null, option, callback);
-  });
+  }
+  
 };
 
 OssClient.prototype.copyObject = function (option, callback) {
