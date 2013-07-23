@@ -370,15 +370,15 @@ OssClient.prototype.listObject = function (/*bucket , prefix, marker, delimiter,
   var method = 'GET';
   var callback;
   var ossParams = {
-    bucket: args.unshift()
+    bucket: args.shift()
   };
   
   callback = typeof args[args.length -1] === "function" ? args.pop() : noop;
-  ossParams.prefix = args.length ? args.unshift() : null;
-  ossParams.marker = args.length ? args.unshift() : null;
-  ossParams.delimiter = args.length ? args.unshift() : null;
-  ossParams.maxKeys = args.length ? args.unshift() : null;
-
+  ossParams.prefix = (args.length ? args.shift() : null);
+  ossParams.marker = (args.length ? args.shift() : null);
+  ossParams.delimiter = (args.length ? args.shift() : null);
+  ossParams.maxKeys = (args.length ? args.shift() : null);
+  console.log(ossParams);
   this.doRequest(method, null, ossParams, callback);
 };
 
