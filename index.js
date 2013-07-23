@@ -6,6 +6,9 @@ var crypto = require('crypto');
 var xml2js = require('xml2js');
 var request = require('request');
 var mime = require('mime');
+var Buffer = require("buffer").Buffer;
+
+var noop = function() {};
 
 function OssClient (options) {
   this._accessId = options.accessKeyId;
@@ -13,7 +16,7 @@ function OssClient (options) {
   this._host = "oss.aliyuncs.com";
   this._port = "8080";
   this._timeout = 30000000;
-};
+}
 /**
  * get the Authorization header
  * "Authorization: OSS " + AccessId + ":" + base64(hmac-sha1(METHOD + "\n"
@@ -29,12 +32,12 @@ OssClient.prototype.getSign = function (method, contentType, contentMd5, date, m
     contentType || '',
     contentMd5 || '',
     date
-  ];
+  ], i, len;
 
   // sort the metas
   if (metas) {
     var metaSorted = Object.keys(metas).sort();
-    for(var i = 0, len = metaSorted.length; i < len; i++) {
+    for(i = 0, len = metaSorted.length; i < len; i++) {
       var k = metaSorted[i];
       params.push(k.toLowerCase() + ':' + metas[k]);
     }
@@ -102,19 +105,31 @@ OssClient.prototype.getUrl = function (ossParams) {
 };
 
 OssClient.prototype.getHeaders = function (method, metas, ossParams) {
-  var date = new Date().toGMTString();
+  var date = new Date().toGMTString(),
+      i;
 
   var headers = {
     Date: date
   };
 
   if (ossParams.srcFile) {
-    headers['content-type'] = mime.lookup(path.extname(ossParams.srcFile));
-    headers['content-Length'] = fs.statSync(ossParams.srcFile).size;
-
     var md5 = crypto.createHash('md5');
-    md5.update(fs.readFileSync(ossParams.srcFile));
-    headers['content-Md5'] = md5.digest('hex');
+    headers['content-type'] = mime.lookup(path.extname(ossParams.srcFile));
+    if(Buffer.isBuffer(ossParams.srcFile)) {
+      headers['content-Length'] = ossParams.srcFile.length;
+      md5.update(ossParams.srcFile);
+      headers['content-Md5'] = md5.digest('hex');
+    } else if(ossParams.srcFile instanceof require("stream")) {
+      headers['content-Length'] = ossParams.contentLength;
+      if(ossParams.md5) {
+        headers['content-Md5'] = ossParams.md5;
+      }
+    } else {
+      headers['content-Length'] = fs.statSync(ossParams.srcFile).size;
+      //TODO: seems dangerous to calculate MD5 using sync methods
+      md5.update(fs.readFileSync(ossParams.srcFile));
+      headers['content-Md5'] = md5.digest('hex');
+    }
   }
   if (ossParams.isGroup) {
     headers['content-type'] = "txt/xml";
@@ -122,14 +137,20 @@ OssClient.prototype.getHeaders = function (method, metas, ossParams) {
   if (ossParams.userMetas) {
     metas = metas || {};
     for (i in ossParams.userMetas) {
-      metas[i] = ossParams.userMetas[i];
+      if(ossParams.userMetas.hasOwnProperty(i)) {
+        metas[i] = ossParams.userMetas[i];
+      }
     }
   }
-  for (var i in metas) {
-    headers[i] = metas[i];
+  for (i in metas) {
+    if(metas.hasOwnProperty(i)) {
+      headers[i] = metas[i];
+    }
   }
-  for (var i in ossParams.userHeaders) {
-    headers[i] = ossParams.userHeaders[i];
+  for (i in ossParams.userHeaders) {
+    if(ossParams.userHeaders.hasOwnProperty(i)) {
+      headers[i] = ossParams.userHeaders[i];
+    }
   }
 
   var resource = this.getResource(ossParams);
@@ -139,35 +160,40 @@ OssClient.prototype.getHeaders = function (method, metas, ossParams) {
 
 OssClient.prototype.doRequest = function (method, metas, ossParams, callback) {
   var options = {};
+  callback = callback || noop;
   options.method = method;
   options.url = this.getUrl(ossParams);
   options.headers = this.getHeaders(method, metas, ossParams);
   options.timeout = this._timeout;
-
+  
   if (ossParams.isGroup) {
     options.body = this.getObjectGroupPostBody(ossParams.bucket, ossParams.objectArray);
+  }
+  
+  if(Buffer.isBuffer(ossParams.srcFile) && method === 'PUT') {
+    options.body = ossParams.srcFile;
   }
 
   var req = request(options, function (error, response, body) {
     if (error) {
-      callback && callback(error);
+      callback(error);
       return;
     }
     if (response.statusCode !== 200 && response.statusCode !== 204) {
       var e = new Error(body);
       e.code = response.statusCode;
-      callback && callback(e);
+      callback(e);
     } else {
       // if we should write the body to a file, we will do it later
       if (body && !ossParams.dstFile) {
         var parser = new xml2js.Parser();
         parser.parseString(body, function(error, result) {
-          callback && callback(error, result);
+          callback(error, result);
         });
-      } else if (method == 'HEAD') {
-        callback && callback(error, response.headers);
+      } else if (method === 'HEAD') {
+        callback(error, response.headers);
       } else {
-        callback && callback(null, {
+        callback(null, {
           statusCode: response.statusCode
         });
       }
@@ -176,12 +202,19 @@ OssClient.prototype.doRequest = function (method, metas, ossParams, callback) {
 
   // put a file to oss
   if (ossParams.srcFile) {
-    var rstream = fs.createReadStream(ossParams.srcFile);
-    rstream.pipe(req);
+    var rstream;
+    if(ossParams.srcFile instanceof require("stream")) {//stream
+      rstream = ossParams.srcFile;
+    } else if(typeof ossParams.srcFile === "string") {//file path
+      rstream = fs.createReadStream(ossParams.srcFile);
+    }
+    if(rstream) {//if srcFile is a buffer, it will not enter
+      rstream.pipe(req);
+    }
   }
   // get a object from oss and save as a file
   if (ossParams.dstFile) {
-    var wstream = fs.createWriteStream(ossParams.dstFile);
+    var wstream = typeof ossParams.dstFile === "string" ? fs.createWriteStream(ossParams.dstFile) : ossParams.dstFile;
     req.pipe(wstream);
   }
 };
@@ -264,19 +297,25 @@ OssClient.prototype.putObject = function (option, callback) {
   *   userMetas:
   * }
   */
+  callback = callback || noop;
   if (!option || !option.bucket || !option.object || !option.srcFile) {
     throw new Error('error arguments!');
   }
 
   var self = this;
-  var thisArguments = arguments;
-  fs.stat(option.srcFile, function(err, stats) {
-    if (err) return callback(err);
-
-    var method = 'PUT';
-
+  var method = 'PUT';
+  // var thisArguments = arguments;
+  if(typeof option.srcFile === "string") {
+    fs.stat(option.srcFile, function(err/*, stats*/) {
+      if (err) {
+        return callback(err);
+      }
+      self.doRequest(method, null, option, callback);
+    });
+  } else {
     self.doRequest(method, null, option, callback);
-  });
+  }
+  
 };
 
 OssClient.prototype.copyObject = function (option, callback) {
@@ -313,7 +352,7 @@ OssClient.prototype.deleteObject = function (option, callback) {
   this.doRequest(method, null, option, callback);
 };
 
-OssClient.prototype.getObject = function (bucket, object, dstFile, /* userHeaders , */ callback) {
+OssClient.prototype.getObject = function (bucket, object, dstFile, userHeaders, callback) {
   if (!bucket || !object || !dstFile) {
     throw new Error('error arguments!');
   }
@@ -325,10 +364,12 @@ OssClient.prototype.getObject = function (bucket, object, dstFile, /* userHeader
     dstFile: dstFile
   };
 
-  if (typeof arguments[3] === 'object') {
-    ossParams.userHeaders = arguments[3];
+  if (typeof userHeaders === 'function') {
+    ossParams.userHeaders = {};
+    callback = noop;
+  } else {
+    ossParams.userHeaders = userHeaders;
   }
-  var callback = arguments[arguments.length-1];
 
   this.doRequest(method, null, ossParams, callback);
 };
@@ -347,22 +388,24 @@ OssClient.prototype.headObject = function (bucket, object, callback) {
   this.doRequest(method, null, ossParams, callback);
 };
 
-OssClient.prototype.listObject = function (bucket /*, prefix, marker, delimiter, maxKeys */, callback) {
-  if (!bucket) {
+OssClient.prototype.listObject = function (/*bucket , prefix, marker, delimiter, maxKeys, callback*/) {
+  if (!arguments.length) {//bucket is required
     throw new Error('error arguments!');
   }
 
+  var args = [].slice.call(arguments, 0);
   var method = 'GET';
+  var callback;
   var ossParams = {
-    bucket: bucket
+    bucket: args.shift()
   };
-
-  ossParams.prefix = arguments[1] ? arguments[1] : null;
-  ossParams.marker = arguments[2] ? arguments[2] : null;
-  ossParams.delimiter = arguments[3] ? arguments[3] : null;
-  ossParams.maxKeys = arguments[4] ? arguments[4] : null;
-  var callback = arguments[arguments.length-1];
-
+  
+  callback = typeof args[args.length -1] === "function" ? args.pop() : noop;
+  ossParams.prefix = (args.length ? args.shift() : null);
+  ossParams.marker = (args.length ? args.shift() : null);
+  ossParams.delimiter = (args.length ? args.shift() : null);
+  ossParams.maxKeys = (args.length ? args.shift() : null);
+  console.log(ossParams);
   this.doRequest(method, null, ossParams, callback);
 };
 
@@ -376,17 +419,21 @@ OssClient.prototype.getObjectEtag = function (object) {
 };
 
 OssClient.prototype.getObjectGroupPostBody = function (bucket, objectArray, callback) {
+  //TODO: bucket, callback is nerver used?
   var xml = '<CreateFileGroup>';
   var index = 0;
+  var i;
 
   for (i in objectArray) {
-    index ++;
-    var etag = this.getObjectEtag(objectArray[i]);
-    xml += '<Part>';
-    xml += '<PartNumber>' + index + '</PartNumber>';
-    xml += '<PartName>' + objectArray[i] + '</PartName>';
-    xml += '<ETag>' + etag + '</ETag>';
-    xml += '</Part>';
+    if(objectArray.hasOwnProperty(i)) {
+      index ++;
+      var etag = this.getObjectEtag(objectArray[i]);
+      xml += '<Part>';
+      xml += '<PartNumber>' + index + '</PartNumber>';
+      xml += '<PartName>' + objectArray[i] + '</PartName>';
+      xml += '<ETag>' + etag + '</ETag>';
+      xml += '</Part>';
+    }
   }
 
   xml += '</CreateFileGroup>';
