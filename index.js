@@ -7,13 +7,15 @@ var xml2js = require('xml2js');
 var request = require('request');
 var mime = require('mime');
 
+var noop = function() {};
+
 function OssClient (options) {
   this._accessId = options.accessKeyId;
   this._accessKey = options.accessKeySecret;
   this._host = "oss.aliyuncs.com";
   this._port = "8080";
   this._timeout = 30000000;
-};
+}
 /**
  * get the Authorization header
  * "Authorization: OSS " + AccessId + ":" + base64(hmac-sha1(METHOD + "\n"
@@ -29,12 +31,12 @@ OssClient.prototype.getSign = function (method, contentType, contentMd5, date, m
     contentType || '',
     contentMd5 || '',
     date
-  ];
+  ], i, len;
 
   // sort the metas
   if (metas) {
     var metaSorted = Object.keys(metas).sort();
-    for(var i = 0, len = metaSorted.length; i < len; i++) {
+    for(i = 0, len = metaSorted.length; i < len; i++) {
       var k = metaSorted[i];
       params.push(k.toLowerCase() + ':' + metas[k]);
     }
@@ -102,7 +104,8 @@ OssClient.prototype.getUrl = function (ossParams) {
 };
 
 OssClient.prototype.getHeaders = function (method, metas, ossParams) {
-  var date = new Date().toGMTString();
+  var date = new Date().toGMTString(),
+      i;
 
   var headers = {
     Date: date
@@ -122,14 +125,20 @@ OssClient.prototype.getHeaders = function (method, metas, ossParams) {
   if (ossParams.userMetas) {
     metas = metas || {};
     for (i in ossParams.userMetas) {
-      metas[i] = ossParams.userMetas[i];
+      if(ossParams.userMetas.hasOwnProperty(i)) {
+        metas[i] = ossParams.userMetas[i];
+      }
     }
   }
-  for (var i in metas) {
-    headers[i] = metas[i];
+  for (i in metas) {
+    if(metas.hasOwnProperty(i)) {
+      headers[i] = metas[i];
+    }
   }
-  for (var i in ossParams.userHeaders) {
-    headers[i] = ossParams.userHeaders[i];
+  for (i in ossParams.userHeaders) {
+    if(ossParams.userHeaders.hasOwnProperty(i)) {
+      headers[i] = ossParams.userHeaders[i];
+    }
   }
 
   var resource = this.getResource(ossParams);
@@ -139,6 +148,7 @@ OssClient.prototype.getHeaders = function (method, metas, ossParams) {
 
 OssClient.prototype.doRequest = function (method, metas, ossParams, callback) {
   var options = {};
+  callback = callback || noop;
   options.method = method;
   options.url = this.getUrl(ossParams);
   options.headers = this.getHeaders(method, metas, ossParams);
@@ -150,24 +160,24 @@ OssClient.prototype.doRequest = function (method, metas, ossParams, callback) {
 
   var req = request(options, function (error, response, body) {
     if (error) {
-      callback && callback(error);
+      callback(error);
       return;
     }
     if (response.statusCode !== 200 && response.statusCode !== 204) {
       var e = new Error(body);
       e.code = response.statusCode;
-      callback && callback(e);
+      callback(e);
     } else {
       // if we should write the body to a file, we will do it later
       if (body && !ossParams.dstFile) {
         var parser = new xml2js.Parser();
         parser.parseString(body, function(error, result) {
-          callback && callback(error, result);
+          callback(error, result);
         });
-      } else if (method == 'HEAD') {
-        callback && callback(error, response.headers);
+      } else if (method === 'HEAD') {
+        callback(error, response.headers);
       } else {
-        callback && callback(null, {
+        callback(null, {
           statusCode: response.statusCode
         });
       }
@@ -176,12 +186,12 @@ OssClient.prototype.doRequest = function (method, metas, ossParams, callback) {
 
   // put a file to oss
   if (ossParams.srcFile) {
-    var rstream = fs.createReadStream(ossParams.srcFile);
+    var rstream = typeof ossParams.srcFile === "string" ?  fs.createReadStream(ossParams.srcFile) : ossParams.srcFile;
     rstream.pipe(req);
   }
   // get a object from oss and save as a file
   if (ossParams.dstFile) {
-    var wstream = fs.createWriteStream(ossParams.dstFile);
+    var wstream = typeof ossParams.dstFile === "string" ? fs.createWriteStream(ossParams.dstFile) : ossParams.dstFile;
     req.pipe(wstream);
   }
 };
@@ -264,15 +274,17 @@ OssClient.prototype.putObject = function (option, callback) {
   *   userMetas:
   * }
   */
+  callback = callback || noop;
   if (!option || !option.bucket || !option.object || !option.srcFile) {
     throw new Error('error arguments!');
   }
 
   var self = this;
-  var thisArguments = arguments;
-  fs.stat(option.srcFile, function(err, stats) {
-    if (err) return callback(err);
-
+  // var thisArguments = arguments;
+  fs.stat(option.srcFile, function(err/*, stats*/) {
+    if (err) {
+      return callback(err);
+    }
     var method = 'PUT';
 
     self.doRequest(method, null, option, callback);
@@ -313,7 +325,7 @@ OssClient.prototype.deleteObject = function (option, callback) {
   this.doRequest(method, null, option, callback);
 };
 
-OssClient.prototype.getObject = function (bucket, object, dstFile, /* userHeaders , */ callback) {
+OssClient.prototype.getObject = function (bucket, object, dstFile, userHeaders, callback) {
   if (!bucket || !object || !dstFile) {
     throw new Error('error arguments!');
   }
@@ -325,10 +337,12 @@ OssClient.prototype.getObject = function (bucket, object, dstFile, /* userHeader
     dstFile: dstFile
   };
 
-  if (typeof arguments[3] === 'object') {
-    ossParams.userHeaders = arguments[3];
+  if (typeof userHeaders === 'function') {
+    ossParams.userHeaders = {};
+    callback = noop;
+  } else {
+    ossParams.userHeaders = userHeaders;
   }
-  var callback = arguments[arguments.length-1];
 
   this.doRequest(method, null, ossParams, callback);
 };
@@ -347,21 +361,23 @@ OssClient.prototype.headObject = function (bucket, object, callback) {
   this.doRequest(method, null, ossParams, callback);
 };
 
-OssClient.prototype.listObject = function (bucket /*, prefix, marker, delimiter, maxKeys */, callback) {
-  if (!bucket) {
+OssClient.prototype.listObject = function (/*bucket , prefix, marker, delimiter, maxKeys, callback*/) {
+  if (!arguments.length) {//bucket is required
     throw new Error('error arguments!');
   }
 
+  var args = [].slice.call(arguments, 0);
   var method = 'GET';
+  var callback;
   var ossParams = {
-    bucket: bucket
+    bucket: args.unshift()
   };
-
-  ossParams.prefix = arguments[1] ? arguments[1] : null;
-  ossParams.marker = arguments[2] ? arguments[2] : null;
-  ossParams.delimiter = arguments[3] ? arguments[3] : null;
-  ossParams.maxKeys = arguments[4] ? arguments[4] : null;
-  var callback = arguments[arguments.length-1];
+  
+  callback = typeof args[args.length -1] === "function" ? args.pop() : noop;
+  ossParams.prefix = args.length ? args.unshift() : null;
+  ossParams.marker = args.length ? args.unshift() : null;
+  ossParams.delimiter = args.length ? args.unshift() : null;
+  ossParams.maxKeys = args.length ? args.unshift() : null;
 
   this.doRequest(method, null, ossParams, callback);
 };
@@ -376,17 +392,21 @@ OssClient.prototype.getObjectEtag = function (object) {
 };
 
 OssClient.prototype.getObjectGroupPostBody = function (bucket, objectArray, callback) {
+  //TODO: bucket, callback is nerver used?
   var xml = '<CreateFileGroup>';
   var index = 0;
+  var i;
 
   for (i in objectArray) {
-    index ++;
-    var etag = this.getObjectEtag(objectArray[i]);
-    xml += '<Part>';
-    xml += '<PartNumber>' + index + '</PartNumber>';
-    xml += '<PartName>' + objectArray[i] + '</PartName>';
-    xml += '<ETag>' + etag + '</ETag>';
-    xml += '</Part>';
+    if(objectArray.hasOwnProperty(i)) {
+      index ++;
+      var etag = this.getObjectEtag(objectArray[i]);
+      xml += '<Part>';
+      xml += '<PartNumber>' + index + '</PartNumber>';
+      xml += '<PartName>' + objectArray[i] + '</PartName>';
+      xml += '<ETag>' + etag + '</ETag>';
+      xml += '</Part>';
+    }
   }
 
   xml += '</CreateFileGroup>';
