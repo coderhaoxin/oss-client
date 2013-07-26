@@ -1,0 +1,4 @@
+exports.option = {
+  accessKeyId: '',
+  accessKeySecret: ''
+};
