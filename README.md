@@ -1,5 +1,8 @@
 ### a node.js module to connect aliyun oss
 
+### other contributors
+* [@RobinQu](https://github.com/RobinQu)
+
 1.用例
 ```js
 var ossAPI = require('oss-client');
@@ -27,7 +30,6 @@ listBucket(callback(err){})
 
 创建bucket
 ```js
-acl:bucket访问规则
 createBucket(bucket, acl, callback(err){})
 ```
 
@@ -43,7 +45,7 @@ getBucketAcl(bucket, callback(err, result){})
 
 设置bucket访问规则
 ```js
-setBucketAcl（bucket, acl, callback(err){})
+setBucketAcl(bucket, acl, callback(err){})
 ```
 
 创建object
