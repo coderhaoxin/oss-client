@@ -2,11 +2,11 @@ var fs = require('fs');
 var path = require('path');
 var util = require('util');
 var crypto = require('crypto');
+var Buffer = require("buffer").Buffer;
 
 var xml2js = require('xml2js');
 var request = require('request');
 var mime = require('mime');
-var Buffer = require("buffer").Buffer;
 
 var noop = function() {};
 
@@ -32,7 +32,8 @@ OssClient.prototype.getSign = function (method, contentType, contentMd5, date, m
     contentType || '',
     contentMd5 || '',
     date
-  ], i, len;
+  ];
+  var i, len;
 
   // sort the metas
   if (metas) {
@@ -105,8 +106,8 @@ OssClient.prototype.getUrl = function (ossParams) {
 };
 
 OssClient.prototype.getHeaders = function (method, metas, ossParams) {
-  var date = new Date().toGMTString(),
-      i;
+  var date = new Date().toGMTString();
+  var i;
 
   var headers = {
     Date: date
@@ -165,11 +166,11 @@ OssClient.prototype.doRequest = function (method, metas, ossParams, callback) {
   options.url = this.getUrl(ossParams);
   options.headers = this.getHeaders(method, metas, ossParams);
   options.timeout = this._timeout;
-  
+
   if (ossParams.isGroup) {
     options.body = this.getObjectGroupPostBody(ossParams.bucket, ossParams.objectArray);
   }
-  
+
   if(Buffer.isBuffer(ossParams.srcFile) && method === 'PUT') {
     options.body = ossParams.srcFile;
   }
@@ -315,7 +316,7 @@ OssClient.prototype.putObject = function (option, callback) {
   } else {
     self.doRequest(method, null, option, callback);
   }
-  
+
 };
 
 OssClient.prototype.copyObject = function (option, callback) {
@@ -352,40 +353,38 @@ OssClient.prototype.deleteObject = function (option, callback) {
   this.doRequest(method, null, option, callback);
 };
 
-OssClient.prototype.getObject = function (bucket, object, dstFile, userHeaders, callback) {
-  if (!bucket || !object || !dstFile) {
+OssClient.prototype.getObject = function (option, callback) {
+  /*
+  * option: {
+  *   bucket,
+  *   object,
+  *   dstFile,
+  *   userHeaders
+  *  }
+  */
+  if (!option || !option.bucket || !option.object || !option.dstFile) {
     throw new Error('error arguments!');
   }
 
   var method = 'GET';
-  var ossParams = {
-    bucket: bucket,
-    object: object,
-    dstFile: dstFile
-  };
 
-  if (typeof userHeaders === 'function') {
-    ossParams.userHeaders = {};
-    callback = noop;
-  } else {
-    ossParams.userHeaders = userHeaders;
-  }
-
-  this.doRequest(method, null, ossParams, callback);
+  this.doRequest(method, null, option, callback);
 };
 
-OssClient.prototype.headObject = function (bucket, object, callback) {
-  if (!bucket || !object) {
+OssClient.prototype.headObject = function (option, callback) {
+  /*
+  * option: {
+  *  bucket,
+  *  object
+  * }
+  */
+  if (!option || !option.bucket || !option.object) {
     throw new Error('error arguments!');
   }
 
   var method = 'HEAD';
-  var ossParams = {
-    bucket: bucket,
-    object: object
-  };
 
-  this.doRequest(method, null, ossParams, callback);
+  this.doRequest(method, null, option, callback);
 };
 
 OssClient.prototype.listObject = function (/*bucket , prefix, marker, delimiter, maxKeys, callback*/) {
@@ -399,7 +398,7 @@ OssClient.prototype.listObject = function (/*bucket , prefix, marker, delimiter,
   var ossParams = {
     bucket: args.shift()
   };
-  
+
   callback = typeof args[args.length -1] === "function" ? args.pop() : noop;
   ossParams.prefix = (args.length ? args.shift() : null);
   ossParams.marker = (args.length ? args.shift() : null);
@@ -425,7 +424,7 @@ OssClient.prototype.getObjectGroupPostBody = function (bucket, objectArray, call
   var i;
 
   for (i in objectArray) {
-    if(objectArray.hasOwnProperty(i)) {
+    if (objectArray.hasOwnProperty(i)) {
       index ++;
       var etag = this.getObjectEtag(objectArray[i]);
       xml += '<Part>';
@@ -440,79 +439,89 @@ OssClient.prototype.getObjectGroupPostBody = function (bucket, objectArray, call
   return xml;
 };
 
-OssClient.prototype.createObjectGroup = function (bucket, objectGroup, objectArray, callback) {
-  if (!bucket || !objectGroup || !objectArray) {
+OssClient.prototype.createObjectGroup = function (option, callback) {
+  /*
+  * option: {
+  *   bucket,
+  *   object,
+  *   objectArray
+  * }
+  */
+  if (!bucket || !object || !objectArray) {
     throw new Error('error arguments!');
   }
 
   var method = 'POST';
-  var ossParams = {
-    bucket: bucket,
-    object: objectGroup,
-    objectArray: objectArray,
-    isGroup: true
-  };
+  option.isGroup = true;
 
-  this.doRequest(method, null, ossParams, callback);
+  this.doRequest(method, null, option, callback);
 };
 
-OssClient.prototype.getObjectGroup = function (bucket, objectGroup, dstFile, callback) {
-  if (!bucket || !objectGroup || !dstFile) {
+OssClient.prototype.getObjectGroup = function (option, callback) {
+  /*
+  * option: {
+  *   bucket,
+  *   object,
+  *   dstFile
+  * }
+  */
+  if (!option || !option.bucket || !option.object || !option.dstFile) {
     throw new Error('error arguments!');
   }
 
   var method = 'GET';
-  var ossParams = {
-    bucket: bucket,
-    object: objectGroup,
-    isGroup: true,
-    dstFile: dstFile
-  };
+  option.isGroup = true;
 
-  this.doRequest(method, null, ossParams, callback);
+  this.doRequest(method, null, option, callback);
 };
 
-OssClient.prototype.getObjectGroupIndex = function (bucket, objectGroup, callback) {
-  if (!bucket || !objectGroup) {
+OssClient.prototype.getObjectGroupIndex = function (option, callback) {
+  /*
+  * option: {
+  *   bucket,
+  *   object
+  * }
+  */
+  if (!option || !option.bucket || !option.object) {
     throw new Error('error arguments!');
   }
 
   var method = 'GET';
-  var ossParams = {
-    bucket: bucket,
-    object: objectGroup
-  };
   var metas = {'X-OSS-FILE-GROUP': ''};
 
-  this.doRequest(method, metas, ossParams, callback);
+  this.doRequest(method, metas, option, callback);
 };
 
-OssClient.prototype.headObjectGroup = function (bucket, objectGroup, callback) {
-  if (!bucket || !objectGroup) {
+OssClient.prototype.headObjectGroup = function (option, callback) {
+  /*
+  * option: {
+  *   bucket,
+  *   object
+  * }
+  */
+  if (!option || !option.bucket || !option.object) {
     throw new Error('error arguments!');
   }
 
   var method = 'HEAD';
-  var ossParams = {
-    bucket: bucket,
-    object: objectGroup
-  };
 
-  this.doRequest(method, null, ossParams, callback);
+  this.doRequest(method, null, option, callback);
 };
 
-OssClient.prototype.deleteObjectGroup = function (bucket, objectGroup, callback) {
-  if (!bucket || !objectGroup) {
+OssClient.prototype.deleteObjectGroup = function (option, callback) {
+  /*
+  * option: {
+  *   bucket,
+  *   object
+  * }
+  */
+  if (!option || !option.bucket || !option.object) {
     throw new Error('error arguments!');
   }
 
   var method = 'DELETE';
-  var ossParams = {
-    bucket: bucket,
-    object: objectGroup
-  };
 
-  this.doRequest(method, null, ossParams, callback);
+  this.doRequest(method, null, option, callback);
 };
 
 exports.OssClient = OssClient;
