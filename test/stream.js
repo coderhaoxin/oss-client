@@ -2,11 +2,8 @@
 
 var fs = require("fs");
 var ossApi = require('../index');
-// var domain = require("domain");
-var option = {
-  accessKeyId: '',
-  accessKeySecret: ''
-};
+// var domain = require('domain');
+var option = require('./config').option;
 var bucket = '';
 var object = Date.now().toString();
 
