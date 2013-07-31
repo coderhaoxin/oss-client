@@ -8,7 +8,7 @@ var xml2js = require('xml2js');
 var request = require('request');
 var mime = require('mime');
 
-var noop = function() {};
+var noop = function (error) {};
 
 function OssClient (options) {
   this._accessId = options.accessKeyId;
@@ -73,12 +73,13 @@ OssClient.prototype.getResource = function (ossParams){
 OssClient.prototype.getUrl = function (ossParams) {
   var url = 'http://' + this._host + ':' + this._port;
   var params = [];
-
   if (typeof ossParams['bucket'] === 'string') {
     url = url + '/' + ossParams['bucket'];
   }
   if (typeof ossParams['object'] === 'string') {
-    url = url + '/' + ossParams['object'];
+    url = url + '/' + ossParams['object'].split("/").map(function (item) {
+      return encodeURIComponent(item);
+    }).join("/");
   }
   if (typeof ossParams['prefix'] === 'string') {
     params.push('prefix=' + ossParams['prefix']);
@@ -174,11 +175,9 @@ OssClient.prototype.doRequest = function (method, metas, ossParams, callback) {
   if(Buffer.isBuffer(ossParams.srcFile) && method === 'PUT') {
     options.body = ossParams.srcFile;
   }
-
   var req = request(options, function (error, response, body) {
     if (error) {
-      callback(error);
-      return;
+      return callback(error);
     }
     if (response.statusCode !== 200 && response.statusCode !== 204) {
       var e = new Error(body);
@@ -225,7 +224,7 @@ OssClient.prototype.doRequest = function (method, metas, ossParams, callback) {
 /*********************/
 OssClient.prototype.createBucket = function (bucket, acl, callback) {
   if (!bucket || !acl) {
-    throw new Error('error arguments!');
+    return callback(new Error('invalid arguments'));
   }
 
   var method = 'PUT';
@@ -247,7 +246,7 @@ OssClient.prototype.listBucket = function (callback) {
 
 OssClient.prototype.deleteBucket = function (bucket, callback) {
   if (!bucket) {
-    throw new Error('error arguments!');
+    return callback(new Error('invalid arguments'));
   }
 
   var method = 'DELETE';
@@ -260,7 +259,7 @@ OssClient.prototype.deleteBucket = function (bucket, callback) {
 
 OssClient.prototype.getBucketAcl = function (bucket, callback) {
   if (!bucket) {
-    throw new Error('error arguments!');
+    return callback(new Error('invalid arguments'));
   }
 
   var method = 'GET';
@@ -274,7 +273,7 @@ OssClient.prototype.getBucketAcl = function (bucket, callback) {
 
 OssClient.prototype.setBucketAcl = function (bucket, acl, callback) {
   if (!bucket || !acl) {
-    throw new Error('error arguments!');
+    return callback(new Error('invalid arguments'));
   }
 
   var method = 'PUT';
@@ -300,7 +299,7 @@ OssClient.prototype.putObject = function (option, callback) {
   */
   callback = callback || noop;
   if (!option || !option.bucket || !option.object || !option.srcFile) {
-    throw new Error('error arguments!');
+    return callback(new Error('invalid arguments'));
   }
 
   var self = this;
@@ -328,11 +327,11 @@ OssClient.prototype.copyObject = function (option, callback) {
   * }
   */
   if (!option || !option.bucket || !option.object || !option.srcObject) {
-    throw new Error('error arguments!');
+    return callback(new Error('invalid arguments'));
   }
 
   var method = 'PUT';
-  var metas = { 'x-oss-copy-source': '/' + option.bucket + '/' + option.srcObject };
+  var metas = {'x-oss-copy-source': '/' + option.bucket + '/' + option.srcObject};
 
   this.doRequest(method, metas, option, callback);
 };
@@ -345,7 +344,7 @@ OssClient.prototype.deleteObject = function (option, callback) {
   * }
   */
   if (!option || !option.bucket || !option.object) {
-    throw new Error('error arguments!');
+    return callback(new Error('invalid arguments'));
   }
 
   var method = 'DELETE';
@@ -363,7 +362,7 @@ OssClient.prototype.getObject = function (option, callback) {
   *  }
   */
   if (!option || !option.bucket || !option.object || !option.dstFile) {
-    throw new Error('error arguments!');
+    return callback(new Error('invalid arguments'));
   }
 
   var method = 'GET';
@@ -379,7 +378,7 @@ OssClient.prototype.headObject = function (option, callback) {
   * }
   */
   if (!option || !option.bucket || !option.object) {
-    throw new Error('error arguments!');
+    return callback(new Error('invalid arguments'));
   }
 
   var method = 'HEAD';
@@ -387,24 +386,25 @@ OssClient.prototype.headObject = function (option, callback) {
   this.doRequest(method, null, option, callback);
 };
 
-OssClient.prototype.listObject = function (/*bucket , prefix, marker, delimiter, maxKeys, callback*/) {
-  if (!arguments.length) {//bucket is required
-    throw new Error('error arguments!');
+OssClient.prototype.listObject = function (option, callback) {
+  /*
+  * option: {
+  *   bucket: bucket
+  * }
+  */
+  if (!option || !option.bucket) {
+    return callback(new Error('invalid arguments'));
   }
 
-  var args = [].slice.call(arguments, 0);
   var method = 'GET';
-  var callback;
-  var ossParams = {
-    bucket: args.shift()
-  };
 
-  callback = typeof args[args.length -1] === "function" ? args.pop() : noop;
-  ossParams.prefix = (args.length ? args.shift() : null);
-  ossParams.marker = (args.length ? args.shift() : null);
-  ossParams.delimiter = (args.length ? args.shift() : null);
-  ossParams.maxKeys = (args.length ? args.shift() : null);
-  console.log(ossParams);
+  var ossParams = {};
+  ossParams.bucket = option.bucket;
+  ossParams.prefix = option.prefix || null;
+  ossParams.marker = option.marker || null;
+  ossParams.delimiter = option.delimiter || null;
+  ossParams.maxKeys = option.maxKeys || null;
+
   this.doRequest(method, null, ossParams, callback);
 };
 
@@ -448,7 +448,7 @@ OssClient.prototype.createObjectGroup = function (option, callback) {
   * }
   */
   if (!bucket || !object || !objectArray) {
-    throw new Error('error arguments!');
+    return callback(new Error('invalid arguments'));
   }
 
   var method = 'POST';
@@ -466,7 +466,7 @@ OssClient.prototype.getObjectGroup = function (option, callback) {
   * }
   */
   if (!option || !option.bucket || !option.object || !option.dstFile) {
-    throw new Error('error arguments!');
+    return callback(new Error('invalid arguments'));
   }
 
   var method = 'GET';
@@ -483,7 +483,7 @@ OssClient.prototype.getObjectGroupIndex = function (option, callback) {
   * }
   */
   if (!option || !option.bucket || !option.object) {
-    throw new Error('error arguments!');
+    return callback(new Error('invalid arguments'));
   }
 
   var method = 'GET';
@@ -500,7 +500,7 @@ OssClient.prototype.headObjectGroup = function (option, callback) {
   * }
   */
   if (!option || !option.bucket || !option.object) {
-    throw new Error('error arguments!');
+    return callback(new Error('invalid arguments'));
   }
 
   var method = 'HEAD';
@@ -516,7 +516,7 @@ OssClient.prototype.deleteObjectGroup = function (option, callback) {
   * }
   */
   if (!option || !option.bucket || !option.object) {
-    throw new Error('error arguments!');
+    return callback(new Error('invalid arguments'));
   }
 
   var method = 'DELETE';

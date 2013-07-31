@@ -23,6 +23,9 @@ var oss = new ossAPI.OssClient(option);
   objectGroup: 'objectGroup name'
 }
 ```
+
+### bucket
+
 列出所有bucket
 ```js
 listBucket(callback(err){})
@@ -48,11 +51,18 @@ getBucketAcl(bucket, callback(err, result){})
 setBucketAcl(bucket, acl, callback(err){})
 ```
 
+### object
+
 创建object
 ```js
 // srcFile: 上传的文件路径
 // userMetas: 可选，object类型，用户自定义header，如x-oss-meta-location
-putObject(bucket, object, srcFile, /* userMetas, */ callback(err) {})
+putObject({
+  bucket: bucket,
+  object: object,
+  srcFile: srcFile,
+  userMetas: userMetas //optional
+}, callback(err) {})
 ```
 
 复制object
@@ -76,12 +86,20 @@ deleteObject({
 ```js
 // dstFile: 保存object的文件路径
 // userHeaders: 可选，object类型，用户自定义header，如If-Unmodified-Since
-getObject(bucket, object, dstFile, /* userHeaders , */ callback(err) {})
+getObject({
+  bucket: bucket,
+  object: object,
+  dstFile: dstFile,
+  userHeaders: userHeaders
+}, callback(err) {})
 ```
 
 获取object头信息
 ```js
-headObject(bucket, object, callback(err, result) {})
+headObject({
+  bucket: bucket,
+  object: object
+}, callback(err, result) {})
 ```
 
 获取object列表
@@ -90,32 +108,57 @@ headObject(bucket, object, callback(err, result) {})
 // marker: 可选，列表起始object
 // delimiter: 可选，object分组字符，若'/'为则不列出路径深度大于等于二层的object。
 // maxKeys: 可选， 列出的object最大个数
-listObject(bucket /*, prefix, marker, delimiter, maxKeys */, callback(err, result) {})
+listObject({
+  bucket: bucket,
+  prefix: prefix,
+  marker: marker,
+  delimiter: delimiter,
+  maxKeys: maxKeys
+}, callback(err, result) {})
 ```
+
+### object group
 
 创建object group
 ```js
 // objectArray: array 类型， 组成object group的object列表
-createObjectGroup(bucket, objectGroup, objectArray, callback(err) {})
+createObjectGroup({
+  bucket: bucket,
+  objectGroup: objectGroup,
+  objectArray: objectArray
+}, callback(err) {})
 ```
 
 获取object group
 ```js
 // dstFile: 保存object group 的文件路径
-getObjectGroup(bucket, objectGroup, dstFile, callback(err) {})
+  getObjectGroup({
+  bucket: bucket,
+  objectGroup: objectGroup,
+  dstFile: dstFile
+}, callback(err) {})
 ```
 
 获取object group index
 ```js
-getObjectGroupIndex(bucket, objectGroup, callback(err, result) {})
+getObjectGroupIndex({
+  bucket: bucket,
+  objectGroup: objectGroup
+}, callback(err, result) {})
 ```
 
 获取object group 头信息
 ```js
-headObjectGroup(bucket, objectGroup, callback(err, result) {})
+headObjectGroup({
+  bucket: bucket,
+  objectGroup: objectGroup
+}, callback(err, result) {})
 ```
 
 删除object group
 ```js
-deleteObjectGroup(bucket, objectGroup, callback(err) {})
+deleteObjectGroup({
+  bucket: bucket,
+  objectGroup: objectGroup
+}, callback(err) {})
 ```
