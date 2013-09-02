@@ -14,7 +14,7 @@ function OssClient (options) {
   this._accessId = options.accessKeyId;
   this._accessKey = options.accessKeySecret;
   this._host = "oss.aliyuncs.com";
-  this._port = "8080";
+  this._port = 80;
   this._timeout = 30000000;
 }
 /**
@@ -70,12 +70,12 @@ OssClient.prototype.getResource = function (ossParams){
 };
 
 OssClient.prototype.getUrl = function (ossParams) {
-  var url = 'http://' + this._host + ':' + this._port;
+  var url = 'http://' + ossParams['bucket'] + "." + this._host : ":" + this._port;
   var params = [];
 
-  if (typeof ossParams['bucket'] === 'string') {
-    url = url + '/' + ossParams['bucket'];
-  }
+  // if (typeof ossParams['bucket'] === 'string') {
+  //   url = url + '/' + ossParams['bucket'];
+  // }
   if (typeof ossParams['object'] === 'string') {
     url = url + '/' + ossParams['object'];
   }
