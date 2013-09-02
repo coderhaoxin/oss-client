@@ -76,7 +76,9 @@ OssClient.prototype.getUrl = function (ossParams) {
     url = url + '/' + ossParams['bucket'];
   }
   if (typeof ossParams['object'] === 'string') {
-    url = url + '/' + encodeURIComponent(ossParams['object']);
+    url = url + '/' + ossParams['object'].split("/").map(function (item) {
+      return encodeURIComponent(item);
+    }).join("/");
   }
   if (typeof ossParams['prefix'] === 'string') {
     params.push('prefix=' + ossParams['prefix']);
