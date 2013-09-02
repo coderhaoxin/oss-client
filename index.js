@@ -73,12 +73,13 @@ OssClient.prototype.getResource = function (ossParams){
 OssClient.prototype.getUrl = function (ossParams) {
   var url = 'http://' + this._host + ':' + this._port;
   var params = [];
-
   if (typeof ossParams['bucket'] === 'string') {
     url = url + '/' + ossParams['bucket'];
   }
   if (typeof ossParams['object'] === 'string') {
-    url = url + '/' + ossParams['object'];
+    url = url + '/' + ossParams['object'].split("/").map(function (item) {
+      return encodeURIComponent(item);
+    }).join("/");
   }
   if (typeof ossParams['prefix'] === 'string') {
     params.push('prefix=' + ossParams['prefix']);
@@ -174,7 +175,6 @@ OssClient.prototype.doRequest = function (method, metas, ossParams, callback) {
   if(Buffer.isBuffer(ossParams.srcFile) && method === 'PUT') {
     options.body = ossParams.srcFile;
   }
-
   var req = request(options, function (error, response, body) {
     if (error) {
       callback(error);
@@ -404,7 +404,6 @@ OssClient.prototype.listObject = function (/*bucket , prefix, marker, delimiter,
   ossParams.marker = (args.length ? args.shift() : null);
   ossParams.delimiter = (args.length ? args.shift() : null);
   ossParams.maxKeys = (args.length ? args.shift() : null);
-  console.log(ossParams);
   this.doRequest(method, null, ossParams, callback);
 };
 
