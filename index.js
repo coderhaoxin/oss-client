@@ -14,7 +14,7 @@ function OssClient (options) {
   this._accessId = options.accessKeyId;
   this._accessKey = options.accessKeySecret;
   this._host = "oss.aliyuncs.com";
-  this._port = 80;
+  this._port = "8080";
   this._timeout = 30000000;
 }
 /**
@@ -70,14 +70,13 @@ OssClient.prototype.getResource = function (ossParams){
 };
 
 OssClient.prototype.getUrl = function (ossParams) {
-  var url = 'http://' + ossParams['bucket'] + "." + this._host : ":" + this._port;
+  var url = 'http://' + this._host + ':' + this._port;
   var params = [];
-
-  // if (typeof ossParams['bucket'] === 'string') {
-  //   url = url + '/' + ossParams['bucket'];
-  // }
+  if (typeof ossParams['bucket'] === 'string') {
+    url = url + '/' + ossParams['bucket'];
+  }
   if (typeof ossParams['object'] === 'string') {
-    url = url + '/' + ossParams['object'];
+    url = url + '/' + encodeURIComponent(ossParams['object']);
   }
   if (typeof ossParams['prefix'] === 'string') {
     params.push('prefix=' + ossParams['prefix']);
@@ -165,7 +164,6 @@ OssClient.prototype.doRequest = function (method, metas, ossParams, callback) {
   options.url = this.getUrl(ossParams);
   options.headers = this.getHeaders(method, metas, ossParams);
   options.timeout = this._timeout;
-  
   if (ossParams.isGroup) {
     options.body = this.getObjectGroupPostBody(ossParams.bucket, ossParams.objectArray);
   }
@@ -173,7 +171,6 @@ OssClient.prototype.doRequest = function (method, metas, ossParams, callback) {
   if(Buffer.isBuffer(ossParams.srcFile) && method === 'PUT') {
     options.body = ossParams.srcFile;
   }
-
   var req = request(options, function (error, response, body) {
     if (error) {
       callback(error);
@@ -405,7 +402,6 @@ OssClient.prototype.listObject = function (/*bucket , prefix, marker, delimiter,
   ossParams.marker = (args.length ? args.shift() : null);
   ossParams.delimiter = (args.length ? args.shift() : null);
   ossParams.maxKeys = (args.length ? args.shift() : null);
-  console.log(ossParams);
   this.doRequest(method, null, ossParams, callback);
 };
 
