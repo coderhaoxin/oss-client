@@ -1,41 +1,48 @@
-/*global __dirname, __filename */
-
-var ossApi = require('../index');
-var domain = require('domain');
+var ossAPI = require('../index');
 var option = require('./config').option;
-var bucket = '';
+var oss = new ossAPI.OssClient(option);
+
+var should = require('should');
+
+var bucket = require('./config').bucket;
 var object = Date.now().toString();
 
-
-var oss = new ossApi.OssClient(option);
-var d = domain.create();
-
-// oss.putObject('catworks-test', Date.now().toString(), __dirname + '/index.js');
-oss.putObject({
-  bucket: bucket,
-  object: object,
-  srcFile: __filename,
-  userMetas: {
-    "x-oss-meta-foo": "bar"
-  }
-}, d.intercept(function(result) {
-  console.log(result);
-  oss.headObject(bucket, object, d.intercept(function(headers) {
-    console.log(headers);
-    oss.listObject(bucket, d.intercept(function(list) {
-      console.log(list.ListBucketResult);
-      oss.deleteObject({
-        bucket: bucket,
-        object: object
-      }, d.intercept(function(result) {
-        console.log(result);
-      }));
-    }));
-  }));
-}));
-
-d.on("error", function(e) {
-  console.error(e);
-});
-
-
+describe('object', function () {
+  it('put object', function (done) {
+    oss.putObject({
+      bucket: bucket,
+      object: object,
+      srcFile: __filename,
+      userMetas: {'x-oss-meta-foo': 'bar'}
+    }, function (error, result) {
+      result.statusCode.should.equal(200);
+      done();
+    })
+  })
+  it('head object', function (done) {
+    oss.headObject({
+      bucket: bucket,
+      object: object
+    }, function (error, headers) {
+      headers['x-oss-meta-foo'].should.equal('bar');
+      done();
+    })
+  })
+  it('list object', function (done) {
+    oss.listObject({
+      bucket: bucket
+    }, function (error, result) {
+      result.ListBucketResult.Contents.length.should.above(0);
+      done();
+    })
+  })
+  it('delete object', function (done) {
+    oss.deleteObject({
+      bucket: bucket,
+      object: object
+    }, function (error, result) {
+      result.statusCode.should.equal(204);
+      done();
+    })
+  })
+})
