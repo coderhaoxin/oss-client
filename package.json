@@ -1,6 +1,6 @@
 {
   "name": "oss-client",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "description": "aliyun oss client for node.js",
   "main": "index.js",
   "scripts": {
@@ -20,12 +20,17 @@
   "readmeFilename": "README.md",
   "dependencies": {
     "xml2js": "~0.2.8",
-    "mime": "~1.2.9",
-    "request": "~2.22.0"
+    "mime": "~1.2.11",
+    "request": "~2.27.0"
   },
-  "gitHead": "992c59467a64f7ffe0634a49a88876c4429f2a27",
+  "gitHead": "9458cda780803ba74d61a4c81d75896f09fb0efd",
   "directories": {
     "test": "test"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "should": "~1.2.2"
+  },
+  "bugs": {
+    "url": "https://github.com/coderhaoxin/oss-client/issues"
+  }
 }

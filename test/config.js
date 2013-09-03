@@ -1,6 +1,6 @@
 exports.option = {
-  accessKeyId: 'QXVY0KI8BevmfdOK',
-  accessKeySecret: 'Oc3E0FjEaVhRZq43JQy2sBLc2p0l5s'
+  accessKeyId: '',
+  accessKeySecret: ''
 };
 
-exports.bucket = 'expro-future-web';
+exports.bucket = '';
