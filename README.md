@@ -1,4 +1,7 @@
 ### a node.js module to connect aliyun oss
+```bash
+npm install oss-client
+```
 
 ### other contributors
 * [@RobinQu](https://github.com/RobinQu)
