@@ -1,10 +1,12 @@
 var ossAPI = require('../index');
-var option = require('./config').option;
-var oss = new ossAPI.OssClient(option);
+var oss = new ossAPI.OssClient({
+  accessKeyId: '',
+  accessKeySecret: ''
+});
 
 var should = require('should');
 
-var bucket = require('./config').bucket;
+var bucket = '';
 var object = Date.now().toString();
 
 describe('object', function () {
@@ -33,6 +35,56 @@ describe('object', function () {
       bucket: bucket
     }, function (error, result) {
       result.ListBucketResult.Contents.length.should.above(0);
+      done();
+    })
+  })
+  it('delete object', function (done) {
+    oss.deleteObject({
+      bucket: bucket,
+      object: object
+    }, function (error, result) {
+      result.statusCode.should.equal(204);
+      done();
+    })
+  })
+})
+
+var Buffer = require('buffer').Buffer;
+
+describe('put object by buffer', function () {
+  it('put object', function (done) {
+    oss.putObject({
+      bucket: bucket,
+      object: object,
+      srcFile: new Buffer("hello,wolrd", "utf8")
+    }, function(error, result) {
+      result.statusCode.should.equal(200);
+      done();
+    });
+  })
+  it('delete object', function (done) {
+    oss.deleteObject({
+      bucket: bucket,
+      object: object
+    }, function (error, result) {
+      result.statusCode.should.equal(204);
+      done();
+    })
+  })
+})
+
+var fs = require("fs");
+
+describe('put object by stream', function () {
+  it('put object', function (done) {
+    var input = fs.createReadStream(__filename);
+    oss.putObject({
+      bucket: bucket,
+      object: object,
+      srcFile: input,
+      contentLength: fs.statSync(__filename).size
+    }, function(error, result) {
+      result.statusCode.should.equal(200);
       done();
     })
   })
