@@ -3,4 +3,4 @@ exports.option = {
   accessKeySecret: ''
 };
 
-exports.bucket = '';
+exports.bucket = Date.now().toString();
