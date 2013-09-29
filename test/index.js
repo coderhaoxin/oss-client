@@ -5,11 +5,13 @@ var oss = new ossAPI.OssClient({
 });
 
 var should = require('should');
+var uuid   = require('node-uuid');
 
 var bucket = '';
-var object = Date.now().toString();
 
 describe('object', function () {
+  var object = uuid.v4();
+
   it('put object', function (done) {
     oss.putObject({
       bucket: bucket,
@@ -52,6 +54,8 @@ describe('object', function () {
 var Buffer = require('buffer').Buffer;
 
 describe('put object by buffer', function () {
+  var object = uuid.v4();
+
   it('put object', function (done) {
     oss.putObject({
       bucket: bucket,
@@ -76,6 +80,8 @@ describe('put object by buffer', function () {
 var fs = require("fs");
 
 describe('put object by stream', function () {
+  var object = uuid.v4();
+
   it('put object', function (done) {
     var input = fs.createReadStream(__filename);
     oss.putObject({
