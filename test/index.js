@@ -17,7 +17,7 @@ describe('object', function () {
       bucket: bucket,
       object: object,
       srcFile: __filename,
-      userMetas: {'x-oss-meta-foo': 'bar'}
+      userMetas: { 'x-oss-meta-foo': 'bar' }
     }, function (error, result) {
       result.statusCode.should.equal(200);
       done();
