@@ -27,45 +27,40 @@ var oss = new ossAPI.OssClient(option);
 }
 ```
 
-### bucket
-
-列出所有bucket
-```js
-listBucket(callback(err){})
-```
-
-创建bucket
-```js
-createBucket(bucket, acl, callback(err){})
-```
-
-删除bucket
-```js
-deleteBucket(bucket, callback(err){})
-```
-
-获取bucket访问规则
-```js
-getBucketAcl(bucket, callback(err, result){})
-```
-
-设置bucket访问规则
-```js
-setBucketAcl(bucket, acl, callback(err){})
-```
-
 ### object
 
-创建object
+创建object(by: file path)
 ```js
 // srcFile: 上传的文件路径
-// userMetas: 可选，object类型，用户自定义header，如x-oss-meta-location
+// userMetas: 可选，object类型，用户自定义header，如: x-oss-meta-location
 putObject({
   bucket: bucket,
   object: object,
   srcFile: srcFile,
   userMetas: userMetas //optional
-}, callback(err) {})
+}, function (err) {})
+```
+
+创建object(by: buffer)
+```js
+// userMetas: 可选，object类型，用户自定义header，如: x-oss-meta-location
+oss.putObject({
+  bucket: bucket,
+  object: object,
+  srcFile: new Buffer("hello,wolrd", "utf8")
+}, function (error, result) {});
+```
+
+创建object(by: stream)
+```js
+// userMetas: 可选，object类型，用户自定义header，如: x-oss-meta-location
+var input = fs.createReadStream(__filename);
+oss.putObject({
+  bucket: bucket,
+  object: object,
+  srcFile: input,
+  contentLength: fs.statSync(__filename).size
+}, function (error, result) {})
 ```
 
 复制object
@@ -74,7 +69,7 @@ copyObject({
   bucket: bucket,
   object: object,
   srcObject: srcObject
-}, callback(err) {})
+}, function (err) {})
 ```
 
 删除object
@@ -82,7 +77,7 @@ copyObject({
 deleteObject({
   bucket: bucket,
   object: object
-}, callback(err) {})
+}, function (err) {})
 ```
 
 获取object
@@ -94,7 +89,7 @@ getObject({
   object: object,
   dstFile: dstFile,
   userHeaders: userHeaders
-}, callback(err) {})
+}, function (err) {})
 ```
 
 获取object头信息
@@ -102,7 +97,7 @@ getObject({
 headObject({
   bucket: bucket,
   object: object
-}, callback(err, result) {})
+}, function (err, result) {})
 ```
 
 获取object列表
@@ -117,5 +112,32 @@ listObject({
   marker: marker,
   delimiter: delimiter,
   maxKeys: maxKeys
-}, callback(err, result) {})
+}, function (err, result) {})
+```
+
+### bucket
+
+列出所有bucket
+```js
+listBucket(function (err) {})
+```
+
+创建bucket
+```js
+createBucket(bucket, acl, function (err) {})
+```
+
+删除bucket
+```js
+deleteBucket(bucket, function (err) {})
+```
+
+获取bucket访问规则
+```js
+getBucketAcl(bucket, function (err, result) {})
+```
+
+设置bucket访问规则
+```js
+setBucketAcl(bucket, acl, function (err) {})
 ```
