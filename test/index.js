@@ -61,7 +61,7 @@ describe('put object by buffer', function () {
       bucket: bucket,
       object: object,
       srcFile: new Buffer("hello,wolrd", "utf8")
-    }, function(error, result) {
+    }, function (error, result) {
       result.statusCode.should.equal(200);
       done();
     });
@@ -89,7 +89,7 @@ describe('put object by stream', function () {
       object: object,
       srcFile: input,
       contentLength: fs.statSync(__filename).size
-    }, function(error, result) {
+    }, function (error, result) {
       result.statusCode.should.equal(200);
       done();
     })
