@@ -2,19 +2,18 @@ var fs     = require('fs');
 var path   = require('path');
 var util   = require('util');
 var crypto = require('crypto');
-var Buffer = require("buffer").Buffer;
+var Buffer = require('buffer').Buffer;
 
 var request = require('request');
 var xml2js  = require('xml2js');
-var async   = require('async');
 var mime    = require('mime');
 
 function OssClient (options) {
-  this.accessKeyId = options.accessKeyId;
+  this.accessKeyId     = options.accessKeyId;
   this.accessKeySecret = options.accessKeySecret;
-  this.host = "oss.aliyuncs.com";
-  this.port = "8080";
-  this.timeout = options.timeout || 30000000;
+  this.host            = options.host    || 'oss.aliyuncs.com';
+  this.port            = options.port    || '8080';
+  this.timeout         = options.timeout || 30000000;
 }
 /**
  * get the Authorization header
@@ -29,7 +28,6 @@ OssClient.prototype.getSign = function (method, contentType, contentMd5, date, m
   var params = [ method, contentType || '', contentMd5 || '', date ];
   var i, len;
 
-  // sort the metas
   if (metas) {
     var metaSorted = Object.keys(metas).sort();
     for(i = 0, len = metaSorted.length; i < len; i++) {
@@ -46,7 +44,7 @@ OssClient.prototype.getSign = function (method, contentType, contentMd5, date, m
   return 'OSS ' + this.accessKeyId + ':' + basicString.digest('base64');
 };
 
-OssClient.prototype.getResource = function (ossParams){
+function getResource(ossParams){
   var resource = '';
 
   if (typeof ossParams['bucket'] === 'string') {
@@ -68,9 +66,9 @@ OssClient.prototype.getUrl = function (ossParams) {
     url = url + '/' + ossParams['bucket'];
   }
   if (typeof ossParams['object'] === 'string') {
-    url = url + '/' + ossParams['object'].split("/").map(function (item) {
+    url = url + '/' + ossParams['object'].split('/').map(function (item) {
       return encodeURIComponent(item);
-    }).join("/");
+    }).join('/');
   }
   if (typeof ossParams['prefix'] === 'string') {
     params.push('prefix=' + ossParams['prefix']);
@@ -103,24 +101,21 @@ OssClient.prototype.getHeaders = function (method, metas, ossParams) {
   };
 
   if (ossParams.srcFile) {
-    var md5 = crypto.createHash('md5');
-    headers['content-type'] = mime.lookup(path.extname(ossParams.srcFile));
+    headers['content-type']   = mime.lookup(path.extname(ossParams.srcFile));
+
     if(Buffer.isBuffer(ossParams.srcFile)) {
       headers['content-Length'] = ossParams.srcFile.length;
+      var md5 = crypto.createHash('md5');
       md5.update(ossParams.srcFile);
       headers['content-Md5'] = md5.digest('hex');
-    } else if(ossParams.srcFile instanceof require("stream")) {
+    } else {
       headers['content-Length'] = ossParams.contentLength;
       if(ossParams.md5) {
         headers['content-Md5'] = ossParams.md5;
       }
-    } else {
-      headers['content-Length'] = fs.statSync(ossParams.srcFile).size;
-      //TODO: seems dangerous to calculate MD5 using sync methods,remove sync methods
-      md5.update(fs.readFileSync(ossParams.srcFile));
-      headers['content-Md5'] = md5.digest('hex');
     }
   }
+
   if (ossParams.userMetas) {
     metas = metas || {};
     for (i in ossParams.userMetas) {
@@ -140,18 +135,19 @@ OssClient.prototype.getHeaders = function (method, metas, ossParams) {
     }
   }
 
-  var resource = this.getResource(ossParams);
+  var resource = getResource(ossParams);
   headers['Authorization'] = this.getSign(method, headers['content-Md5'], headers['content-type'], date, metas, resource);
   return headers;
 };
 
 OssClient.prototype.doRequest = function (method, metas, ossParams, callback) {
-  var options = {};
   callback = callback || function () {};
-  options.method = method;
-  options.url = this.getUrl(ossParams);
-  options.headers = this.getHeaders(method, metas, ossParams);
-  options.timeout = this.timeout;
+  var options = {
+    method  : method,
+    url     : this.getUrl(ossParams),
+    headers : this.getHeaders(method, metas, ossParams),
+    timeout : this.timeout
+  };
 
   if (Buffer.isBuffer(ossParams.srcFile) && method === 'PUT') {
     options.body = ossParams.srcFile;
@@ -162,14 +158,14 @@ OssClient.prototype.doRequest = function (method, metas, ossParams, callback) {
       return callback(error);
     }
     if (response.statusCode !== 200 && response.statusCode !== 204) {
-      var e = new Error(body);
+      var e  = new Error(body);
       e.code = response.statusCode;
       return callback(e);
     }
-    // if we should write the body to a file, we will do it later
+    // if need write body to file, do it later
     if (body && !ossParams.dstFile) {
       var parser = new xml2js.Parser();
-      parser.parseString(body, function(error, result) {
+      parser.parseString(body, function (error, result) {
         callback(error, result);
       });
     } else if (method === 'HEAD') {
@@ -193,100 +189,92 @@ OssClient.prototype.doRequest = function (method, metas, ossParams, callback) {
       rstream.pipe(req);
     }
   }
-  // get a object from oss and save as a file
+  // get a object from oss and save
   if (ossParams.dstFile) {
-    var wstream = (typeof ossParams.dstFile === "string") ? fs.createWriteStream(ossParams.dstFile) : ossParams.dstFile;
+    var wstream = (typeof ossParams.dstFile === 'string') ? fs.createWriteStream(ossParams.dstFile) : ossParams.dstFile;
     req.pipe(wstream);
   }
 };
 
-/*********************/
-/** bucket operater **/
-/*********************/
+/**************/
+/**  bucket  **/
+/**************/
 OssClient.prototype.createBucket = function (bucket, acl, callback) {
   callback = callback || function () {};
-
-  var method = 'PUT';
   var metas = { 'X-OSS-ACL': acl };
   var ossParams = {
     bucket: bucket
   };
-  this.doRequest(method, metas, ossParams, callback);
+
+  this.doRequest('PUT', metas, ossParams, callback);
 };
 
 OssClient.prototype.listBucket = function (callback) {
   callback = callback || function () {};
-  var method = 'GET';
-  var ossParams = {
-    bucket: ''
-  };
+  var ossParams = { bucket: '' };
 
-  this.doRequest(method, null, ossParams, callback);
+  this.doRequest('GET', null, ossParams, callback);
 };
 
 OssClient.prototype.deleteBucket = function (bucket, callback) {
   callback = callback || function () {};
-
-  var method = 'DELETE';
   var ossParams = {
     bucket: bucket
   };
 
-  this.doRequest(method, null, ossParams, callback);
+  this.doRequest('DELETE', null, ossParams, callback);
 };
 
 OssClient.prototype.getBucketAcl = function (bucket, callback) {
   callback = callback || function () {};
-
-  var method = 'GET';
   var ossParams = {
     bucket: bucket,
     isAcl: true
   };
 
-  this.doRequest(method, null, ossParams, callback);
+  this.doRequest('GET', null, ossParams, callback);
 };
 
 OssClient.prototype.setBucketAcl = function (bucket, acl, callback) {
   callback = callback || function () {};
-
-  var method = 'PUT';
-  var metas = {'X-OSS-ACL': acl};
+  var metas  = { 'X-OSS-ACL': acl };
   var ossParams = {
     bucket: bucket
   };
 
-  this.doRequest(method, metas, ossParams, callback);
+  this.doRequest('PUT', metas, ossParams, callback);
 };
 
-/*********************/
-/** object operater **/
-/*********************/
+/**************/
+/**  object  **/
+/**************/
 OssClient.prototype.putObject = function (option, callback) {
   /*
   * option: {
   *   bucket:,
   *   object:,
   *   srcFile:,
-  *   userMetas:
+  *   contentLength: (if srcFile is stream, this is necessary)
+  *   userMetas: {}
   * }
   */
   callback = callback || function () {};
-
   var self = this;
-  var method = 'PUT';
 
-  if(typeof option.srcFile === "string") {
-    fs.stat(option.srcFile, function(err/*, stats*/) {
+  if(typeof option.srcFile === 'string') {
+    // upload by file path
+    fs.stat(option.srcFile, function (err, state) {
       if (err) {
         return callback(err);
       }
-      self.doRequest(method, null, option, callback);
+      option.contentLength = state.size;
+      //todo: add option.md5 = ...
+      self.doRequest('PUT', null, option, callback);
     });
   } else {
-    self.doRequest(method, null, option, callback);
+    // upload by buffer or stream
+    self.doRequest('PUT', null, option, callback);
   }
-
 };
 
 OssClient.prototype.copyObject = function (option, callback) {
@@ -298,11 +286,9 @@ OssClient.prototype.copyObject = function (option, callback) {
   * }
   */
   callback = callback || function () {};
+  var metas = { 'x-oss-copy-source': '/' + option.bucket + '/' + option.srcObject };
 
-  var method = 'PUT';
-  var metas = {'x-oss-copy-source': '/' + option.bucket + '/' + option.srcObject};
-
-  this.doRequest(method, metas, option, callback);
+  this.doRequest('PUT', metas, option, callback);
 };
 
 OssClient.prototype.deleteObject = function (option, callback) {
@@ -314,9 +300,7 @@ OssClient.prototype.deleteObject = function (option, callback) {
   */
   callback = callback || function () {};
 
-  var method = 'DELETE';
-
-  this.doRequest(method, null, option, callback);
+  this.doRequest('DELETE', null, option, callback);
 };
 
 OssClient.prototype.getObject = function (option, callback) {
@@ -330,9 +314,7 @@ OssClient.prototype.getObject = function (option, callback) {
   */
   callback = callback || function () {};
 
-  var method = 'GET';
-
-  this.doRequest(method, null, option, callback);
+  this.doRequest('GET', null, option, callback);
 };
 
 OssClient.prototype.headObject = function (option, callback) {
@@ -344,9 +326,7 @@ OssClient.prototype.headObject = function (option, callback) {
   */
   callback = callback || function () {};
 
-  var method = 'HEAD';
-
-  this.doRequest(method, null, option, callback);
+  this.doRequest('HEAD', null, option, callback);
 };
 
 OssClient.prototype.listObject = function (option, callback) {
@@ -356,17 +336,15 @@ OssClient.prototype.listObject = function (option, callback) {
   * }
   */
   callback = callback || function () {};
+  var ossParams = {
+    bucket   : option.bucket,
+    prefix   : option.prefix || null,
+    marker   : option.marker || null,
+    delimiter: option.delimiter || null,
+    maxKeys  : option.maxKeys || null
+  };
 
-  var method = 'GET';
-
-  var ossParams = {};
-  ossParams.bucket = option.bucket;
-  ossParams.prefix = option.prefix || null;
-  ossParams.marker = option.marker || null;
-  ossParams.delimiter = option.delimiter || null;
-  ossParams.maxKeys = option.maxKeys || null;
-
-  this.doRequest(method, null, ossParams, callback);
+  this.doRequest('GET', null, ossParams, callback);
 };
 
 exports.OssClient = OssClient;
