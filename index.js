@@ -101,7 +101,7 @@ OssClient.prototype.getHeaders = function (method, metas, ossParams) {
   };
 
   if (ossParams.srcFile) {
-    headers['content-type'] =ossParams['contentType'] || mime.lookup(path.extname(ossParams.srcFile));
+    headers['content-type'] = ossParams['contentType'] || mime.lookup(path.extname(ossParams.srcFile));
 
     if(Buffer.isBuffer(ossParams.srcFile)) {
       headers['content-Length'] = ossParams.srcFile.length;
@@ -150,6 +150,9 @@ OssClient.prototype.doRequest = function (method, metas, ossParams, callback) {
   };
 
   if (Buffer.isBuffer(ossParams.srcFile) && method === 'PUT') {
+    if (!ossParams.srcFile.length) {
+      return callback(new Error('null buffer'));
+    }
     options.body = ossParams.srcFile;
   }
 
