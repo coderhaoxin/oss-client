@@ -5,6 +5,7 @@ npm install oss-client
 
 ### other contributors
 * [@RobinQu](https://github.com/RobinQu)
+* [@xuming314](https://github.com/xuming314)
 
 1.用例
 ```js
@@ -43,11 +44,16 @@ putObject({
 
 创建object(by: buffer)
 ```js
-// userMetas: 可选，object类型，用户自定义header，如: x-oss-meta-location
+/*
+* userMetas: 可选，object类型，用户自定义header，如: x-oss-meta-location
+* contentType: 可选，但推荐添加(buffer无法自动获取contentType)
+*/
+
 oss.putObject({
   bucket: bucket,
   object: object,
-  srcFile: new Buffer("hello,wolrd", "utf8")
+  srcFile: new Buffer("hello,wolrd", "utf8"),
+  contentType: 'image/jpeg'
 }, function (error, result) {});
 ```
 

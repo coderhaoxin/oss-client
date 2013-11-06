@@ -101,7 +101,7 @@ OssClient.prototype.getHeaders = function (method, metas, ossParams) {
   };
 
   if (ossParams.srcFile) {
-    headers['content-type'] =ossParams['contentType'] || mime.lookup(path.extname(ossParams.srcFile));
+    headers['content-type'] = ossParams['contentType'] || mime.lookup(path.extname(ossParams.srcFile));
 
     if(Buffer.isBuffer(ossParams.srcFile)) {
       headers['content-Length'] = ossParams.srcFile.length;

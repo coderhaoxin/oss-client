@@ -1,6 +1,6 @@
 {
   "name": "oss-client",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "aliyun oss client for node.js",
   "main": "index.js",
   "scripts": {
@@ -16,14 +16,12 @@
     "node.js"
   ],
   "author": "haoxin",
-  "license": "BSD",
-  "readmeFilename": "README.md",
+  "license": "BSD-2-Clause",
   "dependencies": {
     "request": "~2.27.0",
     "xml2js": "~0.2.8",
     "mime": "~1.2.11"
   },
-  "gitHead": "9458cda780803ba74d61a4c81d75896f09fb0efd",
   "directories": {
     "test": "test"
   },
