@@ -150,6 +150,9 @@ OssClient.prototype.doRequest = function (method, metas, ossParams, callback) {
   };
 
   if (Buffer.isBuffer(ossParams.srcFile) && method === 'PUT') {
+    if (!ossParams.srcFile.length) {
+      return callback(new Error('null buffer'));
+    }
     options.body = ossParams.srcFile;
   }
 
