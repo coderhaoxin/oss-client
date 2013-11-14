@@ -60,7 +60,7 @@ describe('put object by buffer', function () {
     oss.putObject({
       bucket: bucket,
       object: object,
-      srcFile: new Buffer("hello,wolrd", "utf8")
+      srcFile: new Buffer('hello,wolrd', 'utf8')
     }, function (error, result) {
       result.statusCode.should.equal(200);
       done();
@@ -77,7 +77,23 @@ describe('put object by buffer', function () {
   })
 })
 
-var fs = require("fs");
+describe('put null buffer', function () {
+  var object = uuid.v4();
+
+  it('should get error', function (done) {
+    oss.putObject({
+      bucket: bucket,
+      object: object,
+      srcFile: new Buffer('', 'utf8')
+    }, function (error, result) {
+      should.exist(error);
+      error.message.should.equal('null buffer');
+      done();
+    })
+  })
+})
+
+var fs = require('fs');
 
 describe('put object by stream', function () {
   var object = uuid.v4();
