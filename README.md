@@ -1,3 +1,5 @@
+[![NPM](https://nodei.co/npm/oss-client.png?downloads=true)](https://nodei.co/npm/oss-client/)
+
 ### a node.js module to connect aliyun oss
 ```bash
 npm install oss-client
