@@ -9,15 +9,15 @@ npm install oss-client
 * [@RobinQu](https://github.com/RobinQu)
 * [@xuming314](https://github.com/xuming314)
 
-1.用例
+### how to use
 ```js
-var ossAPI = require('oss-client');
+var OSS = require('oss-client');
 var option = {
   accessKeyId: 'your access key id',
   accessKeySecret: 'your access key secret'
 };
 
-var oss = new ossAPI.OssClient(option);
+var oss = new OSS.OssClient(option);
 ```
 
 参数说明：
@@ -25,8 +25,7 @@ var oss = new ossAPI.OssClient(option);
 {
   bucket: 'bucket name',
   object: 'object name',
-  acl: 'bucket 访问规则',
-  objectGroup: 'objectGroup name'
+  acl: 'bucket 访问规则'
 }
 ```
 
@@ -132,7 +131,10 @@ listBucket(function (err) {})
 
 创建bucket
 ```js
-createBucket(bucket, acl, function (err) {})
+createBucket({
+	bucket: bucket,
+	acl: acl
+}, function (err) {})
 ```
 
 删除bucket
@@ -147,5 +149,8 @@ getBucketAcl(bucket, function (err, result) {})
 
 设置bucket访问规则
 ```js
-setBucketAcl(bucket, acl, function (err) {})
+setBucketAcl({
+	bucket: bucket,
+	acl: acl
+}, function (err) {})
 ```

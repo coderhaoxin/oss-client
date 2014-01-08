@@ -199,14 +199,20 @@ OssClient.prototype.doRequest = function (method, metas, ossParams, callback) {
   }
 };
 
-/**************/
-/**  bucket  **/
-/**************/
-OssClient.prototype.createBucket = function (bucket, acl, callback) {
+/*
+* bucket
+*/
+OssClient.prototype.createBucket = function (option, callback) {
+  /*
+  * option: {
+  *   bucket:'',
+  *   acl:''
+  * }
+  */
   callback = callback || function () {};
-  var metas = { 'X-OSS-ACL': acl };
+  var metas = { 'X-OSS-ACL': option.acl };
   var ossParams = {
-    bucket: bucket
+    bucket: option.bucket
   };
 
   this.doRequest('PUT', metas, ossParams, callback);
@@ -238,19 +244,25 @@ OssClient.prototype.getBucketAcl = function (bucket, callback) {
   this.doRequest('GET', null, ossParams, callback);
 };
 
-OssClient.prototype.setBucketAcl = function (bucket, acl, callback) {
+OssClient.prototype.setBucketAcl = function (option, callback) {
+  /*
+  * option: {
+  *   bucket:'',
+  *   acl:''
+  * }
+  */
   callback = callback || function () {};
-  var metas  = { 'X-OSS-ACL': acl };
+  var metas  = { 'X-OSS-ACL': option.acl };
   var ossParams = {
-    bucket: bucket
+    bucket: option.bucket
   };
 
   this.doRequest('PUT', metas, ossParams, callback);
 };
 
-/**************/
-/**  object  **/
-/**************/
+/*
+* object
+*/
 OssClient.prototype.putObject = function (option, callback) {
   /*
   * option: {

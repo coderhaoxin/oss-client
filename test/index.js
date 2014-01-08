@@ -1,13 +1,13 @@
-var ossAPI = require('../index');
-var oss = new ossAPI.OssClient({
-  accessKeyId: '',
-  accessKeySecret: ''
+var OSS = require('../index');
+var oss = new OSS.OssClient({
+  accessKeyId: 'your access key id',
+  accessKeySecret: 'your access key secret'
 });
 
 var should = require('should');
 var uuid   = require('node-uuid');
 
-var bucket = '';
+var bucket = 'your bucket';
 
 describe('object', function () {
   var object = uuid.v4();
@@ -117,6 +117,56 @@ describe('put object by stream', function () {
     }, function (error, result) {
       result.statusCode.should.equal(204);
       done();
+    })
+  })
+})
+
+describe('bucket', function () {
+  var bucketName = uuid.v4();
+
+  it('create bucket', function (done) {
+    oss.createBucket({
+      bucket: bucketName,
+      acl: 'public-read'
+    }, function (error, result) {
+      should.not.exist(error)
+      result.statusCode.should.equal(200)
+      done()
+    })
+  })
+
+  it('get bucket list', function (done) {
+    oss.listBucket(function (error, result) {
+      should.not.exist(error)
+      should.exist(result.ListAllMyBucketsResult)
+      done()
+    })
+  })
+
+  it('get bucket acl', function (done) {
+    oss.getBucketAcl(bucketName, function (error, result) {
+      should.not.exist(error)
+      should.exist(result.AccessControlPolicy)
+      done()
+    })
+  })
+
+  it('set bucket acl', function (done) {
+    oss.setBucketAcl({
+      bucket: bucketName,
+      acl: 'private'
+    }, function (error, result) {
+      should.not.exist(error)
+      result.statusCode.should.equal(200)
+      done()
+    })
+  })
+
+  it('delete bucket', function (done) {
+    oss.deleteBucket(bucketName, function (error, result) {
+      should.not.exist(error)
+      result.statusCode.should.equal(204)
+      done()
     })
   })
 })
