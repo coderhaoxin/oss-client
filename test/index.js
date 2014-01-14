@@ -1,13 +1,11 @@
 var OSS = require('../index');
-var oss = new OSS.OssClient({
-  accessKeyId: 'your access key id',
-  accessKeySecret: 'your access key secret'
-});
+var config = require('./config');
+var oss = new OSS.OssClient(config);
 
 var should = require('should');
 var uuid   = require('node-uuid');
 
-var bucket = 'your bucket';
+var bucket = config.bucket;
 
 describe('object', function () {
   var object = uuid.v4();
@@ -29,6 +27,20 @@ describe('object', function () {
       object: object
     }, function (error, headers) {
       headers['x-oss-meta-foo'].should.equal('bar');
+      done();
+    })
+  })
+  it('download object to write stream', function (done) {
+    var ws = fs.createWriteStream('/tmp/oss-test-download-file');
+    oss.getObject({
+      bucket: bucket,
+      object: object,
+      dstFile: ws,
+    }, function (error, result) {
+      should.not.exist(error);
+      result.should.eql({statusCode: 200});
+      fs.statSync('/tmp/oss-test-download-file').size.should.equal(fs.statSync(__filename).size);
+      fs.readFileSync('/tmp/oss-test-download-file', 'utf8').should.equal(fs.readFileSync(__filename, 'utf8'));
       done();
     })
   })
