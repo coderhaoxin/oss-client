@@ -156,6 +156,8 @@ OssClient.prototype.doRequest = function (method, metas, ossParams, callback) {
     options.body = ossParams.srcFile;
   }
 
+  var wstream;
+
   var req = request(options, function (error, response, body) {
     if (error) {
       return callback(error);
@@ -174,7 +176,14 @@ OssClient.prototype.doRequest = function (method, metas, ossParams, callback) {
     } else if (method === 'HEAD') {
       callback(error, response.headers);
     } else {
-      callback(null, { statusCode: response.statusCode });
+      var result = { statusCode: response.statusCode };
+      if (!wstream) {
+        return callback(null, result);
+      }
+      // need to wait for write stream finish
+      wstream.on('finish', function () {
+        callback(null, result);
+      });
     }
   });
 
@@ -194,7 +203,7 @@ OssClient.prototype.doRequest = function (method, metas, ossParams, callback) {
   }
   // get a object from oss and save
   if (ossParams.dstFile) {
-    var wstream = (typeof ossParams.dstFile === 'string') ? fs.createWriteStream(ossParams.dstFile) : ossParams.dstFile;
+    wstream = (typeof ossParams.dstFile === 'string') ? fs.createWriteStream(ossParams.dstFile) : ossParams.dstFile;
     req.pipe(wstream);
   }
 };

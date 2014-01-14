@@ -4,7 +4,11 @@
   "description": "aliyun oss client for node.js",
   "main": "index.js",
   "scripts": {
-    "test": "mocha"
+    "test": "make test-all"
+  },
+  "config": {
+    "blanket": { "pattern": "oss-client/index.js" },
+    "travis-cov": { "threshold": 90 }
   },
   "repository": {
     "type": "git",
@@ -26,6 +30,12 @@
     "test": "test"
   },
   "devDependencies": {
+    "blanket": "*",
+    "should": "*",
+    "mocha": "*",
+    "travis-cov": "*",
+    "coveralls": "*",
+    "mocha-lcov-reporter": "*",
     "should": "~2.1.1",
     "node-uuid": "~1.4.1"
   },
