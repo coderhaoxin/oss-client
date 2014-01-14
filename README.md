@@ -6,6 +6,7 @@ npm install oss-client
 ```
 
 ### other contributors
+* [@fengmk2](https://github.com/fengmk2)
 * [@RobinQu](https://github.com/RobinQu)
 * [@xuming314](https://github.com/xuming314)
 
