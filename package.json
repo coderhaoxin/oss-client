@@ -1,6 +1,6 @@
 {
   "name": "oss-client",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "aliyun oss client for node.js",
   "main": "index.js",
   "scripts": {
@@ -35,12 +35,12 @@
   },
   "devDependencies": {
     "blanket": "*",
-    "should": "~2.1.1",
+    "should": "*",
     "mocha": "*",
     "travis-cov": "*",
     "coveralls": "*",
     "mocha-lcov-reporter": "*",
-    "node-uuid": "~1.4.1"
+    "node-uuid": "*"
   },
   "bugs": {
     "url": "https://github.com/coderhaoxin/oss-client/issues"
