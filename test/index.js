@@ -23,9 +23,6 @@ describe('object', function () {
     })
   })
 
-
-  return
-
   it('head object', function (done) {
     oss.headObject({
       bucket: bucket,
@@ -67,9 +64,6 @@ describe('object', function () {
     })
   })
 })
-
-
-return
 
 var Buffer = require('buffer').Buffer;
 

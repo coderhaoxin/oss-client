@@ -31,8 +31,8 @@ OssClient.prototype.getSign = function (method, contentType, contentMd5, date, m
   if (metas) {
     var metaSorted = Object.keys(metas).sort();
     for(i = 0, len = metaSorted.length; i < len; i++) {
-      var k = metaSorted[i].toLowerCase().trim();
-      if(~k.indexOf("x-oss")){
+      var k = metaSorted[i];
+      if(~k.toLowerCase().trim().indexOf("x-oss")){
         /**
          * NOTE:
          *  according to OSS API doc, only CanonicalizedOSSHeaders(starts with "x-oss-")
@@ -40,7 +40,7 @@ OssClient.prototype.getSign = function (method, contentType, contentMd5, date, m
          *
          *  - yi 2014-02-18
          */
-        params.push(k.toLowerCase() + ':' + metas[k].trim());
+        params.push(k.toLowerCase().trim() + ':' + metas[k].trim());
       }
     }
   }
