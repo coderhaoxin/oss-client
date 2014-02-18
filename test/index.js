@@ -15,12 +15,14 @@ describe('object', function () {
       bucket: bucket,
       object: object,
       srcFile: __filename,
+      //userMetas: { "Cache-Control": "max-age=5" }
       userMetas: { 'x-oss-meta-foo': 'bar' }
     }, function (error, result) {
       result.statusCode.should.equal(200);
       done();
     })
   })
+
   it('head object', function (done) {
     oss.headObject({
       bucket: bucket,
