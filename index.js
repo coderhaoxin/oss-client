@@ -33,13 +33,6 @@ OssClient.prototype.getSign = function (method, contentType, contentMd5, date, m
     for(i = 0, len = metaSorted.length; i < len; i++) {
       var k = metaSorted[i];
       if(~k.toLowerCase().trim().indexOf("x-oss")){
-        /**
-         * NOTE:
-         *  according to OSS API doc, only CanonicalizedOSSHeaders(starts with "x-oss-")
-         *  should be included in the signature
-         *
-         *  - yi 2014-02-18
-         */
         params.push(k.toLowerCase().trim() + ':' + metas[k].trim());
       }
     }
