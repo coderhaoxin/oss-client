@@ -9,6 +9,7 @@ npm install oss-client
 * [@fengmk2](https://github.com/fengmk2)
 * [@RobinQu](https://github.com/RobinQu)
 * [@xuming314](https://github.com/xuming314)
+* [@yi](https://github.com/yi)
 
 ### how to use
 ```js
