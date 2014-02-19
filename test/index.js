@@ -15,7 +15,6 @@ describe('object', function () {
       bucket: bucket,
       object: object,
       srcFile: __filename,
-      //userMetas: { "Cache-Control": "max-age=5" }
       userMetas: { 'x-oss-meta-foo': 'bar' }
     }, function (error, result) {
       result.statusCode.should.equal(200);
@@ -51,6 +50,29 @@ describe('object', function () {
       bucket: bucket
     }, function (error, result) {
       result.ListBucketResult.Contents.length.should.above(0);
+      done();
+    })
+  })
+  it('delete object', function (done) {
+    oss.deleteObject({
+      bucket: bucket,
+      object: object
+    }, function (error, result) {
+      result.statusCode.should.equal(204);
+      done();
+    })
+  })
+
+  object = uuid.v4();
+
+  it('put object with userMetas without x-oss', function (done) {
+    oss.putObject({
+      bucket: bucket,
+      object: object,
+      srcFile: __filename,
+      userMetas: { "Cache-Control": "max-age=5" }
+    }, function (error, result) {
+      result.statusCode.should.equal(200);
       done();
     })
   })
