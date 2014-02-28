@@ -1,8 +1,8 @@
+'use strict';
+
 var fs     = require('fs');
 var path   = require('path');
-var util   = require('util');
 var crypto = require('crypto');
-var Buffer = require('buffer').Buffer;
 
 var request = require('request');
 var xml2js  = require('xml2js');
@@ -32,7 +32,7 @@ OssClient.prototype.getSign = function (method, contentType, contentMd5, date, m
     var metaSorted = Object.keys(metas).sort();
     for(i = 0, len = metaSorted.length; i < len; i++) {
       var k = metaSorted[i];
-      if(~k.toLowerCase().trim().indexOf("x-oss")){
+      if(~k.toLowerCase().trim().indexOf('x-oss')){
         params.push(k.toLowerCase().trim() + ':' + metas[k].trim());
       }
     }
@@ -49,45 +49,45 @@ OssClient.prototype.getSign = function (method, contentType, contentMd5, date, m
 function getResource(ossParams){
   var resource = '';
 
-  if (typeof ossParams['bucket'] === 'string') {
-    resource = '/' + ossParams['bucket'];
+  if (typeof ossParams.bucket === 'string') {
+    resource = '/' + ossParams.bucket;
   }
-  if (typeof ossParams['object'] === 'string') {
-    resource = resource + '/' + ossParams['object'];
+  if (typeof ossParams.object === 'string') {
+    resource = resource + '/' + ossParams.object;
   }
-  if (typeof ossParams['isAcl'] === 'boolean') {
+  if (typeof ossParams.isAcl === 'boolean') {
     resource = resource + '?acl';
   }
   return resource;
-};
+}
 
 OssClient.prototype.getUrl = function (ossParams) {
   var url = 'http://' + this.host + ':' + this.port;
   var params = [];
-  if (typeof ossParams['bucket'] === 'string') {
-    url = url + '/' + ossParams['bucket'];
+  if (typeof ossParams.bucket === 'string') {
+    url = url + '/' + ossParams.bucket;
   }
-  if (typeof ossParams['object'] === 'string') {
-    url = url + '/' + ossParams['object'].split('/').map(function (item) {
+  if (typeof ossParams.object === 'string') {
+    url = url + '/' + ossParams.object.split('/').map(function (item) {
       return encodeURIComponent(item);
     }).join('/');
   }
-  if (typeof ossParams['prefix'] === 'string') {
-    params.push('prefix=' + ossParams['prefix']);
+  if (typeof ossParams.prefix === 'string') {
+    params.push('prefix=' + ossParams.prefix);
   }
-  if (typeof ossParams['marker'] === 'string') {
-    params.push('marker=' + ossParams['marker']);
+  if (typeof ossParams.marker === 'string') {
+    params.push('marker=' + ossParams.marker);
   }
-  if (typeof ossParams['maxKeys'] === 'string') {
-    params.push('max-keys=' + ossParams['maxKeys']);
+  if (typeof ossParams.maxKeys === 'string') {
+    params.push('max-keys=' + ossParams.maxKeys);
   }
-  if (typeof ossParams['delimiter'] === 'string') {
-    params.push('delimiter='+ ossParams['delimiter']);
+  if (typeof ossParams.delimiter === 'string') {
+    params.push('delimiter='+ ossParams.delimiter);
   }
   if (params.length > 0) {
     url = url + '?' + params.join('&');
   }
-  if (typeof ossParams['isAcl'] === 'boolean') {
+  if (typeof ossParams.isAcl === 'boolean') {
     url = url + '?acl';
   }
 
@@ -103,7 +103,7 @@ OssClient.prototype.getHeaders = function (method, metas, ossParams) {
   };
 
   if (ossParams.srcFile) {
-    headers['content-type'] = ossParams['contentType'] || mime.lookup(path.extname(ossParams.srcFile));
+    headers['content-type'] = ossParams.contentType || mime.lookup(path.extname(ossParams.srcFile));
 
     if(Buffer.isBuffer(ossParams.srcFile)) {
       headers['content-Length'] = ossParams.srcFile.length;
@@ -138,7 +138,7 @@ OssClient.prototype.getHeaders = function (method, metas, ossParams) {
   }
 
   var resource = getResource(ossParams);
-  headers['Authorization'] = this.getSign(method, headers['content-Md5'], headers['content-type'], date, metas, resource);
+  headers.Authorization = this.getSign(method, headers['content-Md5'], headers['content-type'], date, metas, resource);
   return headers;
 };
 
