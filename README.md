@@ -156,3 +156,6 @@ setBucketAcl({
 	acl: acl
 }, function (err) {})
 ```
+
+### License
+MIT
