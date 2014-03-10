@@ -1,6 +1,6 @@
 {
   "name": "oss-client",
-  "version": "0.4.0-alpha1",
+  "version": "0.4.0-rc1",
   "description": "aliyun oss client for node.js",
   "main": "index.js",
   "scripts": {
@@ -27,8 +27,7 @@
   "license": "MIT",
   "dependencies": {
     "mime": "~1.2.11",
-    "xml2js": "~0.4.1",
-    "request": "~2.34.0"
+    "xml2js": "~0.4.1"
   },
   "directories": {
     "test": "test"

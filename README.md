@@ -5,11 +5,7 @@
 npm install oss-client
 ```
 
-### other contributors
-* [@fengmk2](https://github.com/fengmk2)
-* [@RobinQu](https://github.com/RobinQu)
-* [@xuming314](https://github.com/xuming314)
-* [@yi](https://github.com/yi)
+[aliyun oss document](http://imgs-storage.cdn.aliyuncs.com/help/oss/OSS_API_20131015.pdf?spm=5176.383663.5.23.OEtIjV&file=OSS_API_20131015.pdf)
 
 ### how to use
 ```js
@@ -42,7 +38,7 @@ putObject({
   object: object,
   srcFile: srcFile,
   userMetas: userMetas //optional
-}, function (err) {})
+}, function (err) {});
 ```
 
 创建object(by: buffer)
@@ -69,7 +65,7 @@ oss.putObject({
   object: object,
   srcFile: input,
   contentLength: fs.statSync(__filename).size
-}, function (error, result) {})
+}, function (error, result) {});
 ```
 
 复制object
@@ -78,7 +74,7 @@ copyObject({
   bucket: bucket,
   object: object,
   srcObject: srcObject
-}, function (err) {})
+}, function (err) {});
 ```
 
 删除object
@@ -86,7 +82,7 @@ copyObject({
 deleteObject({
   bucket: bucket,
   object: object
-}, function (err) {})
+}, function (err) {});
 ```
 
 获取object
@@ -98,7 +94,7 @@ getObject({
   object: object,
   dstFile: dstFile,
   userHeaders: userHeaders
-}, function (err) {})
+}, function (err) {});
 ```
 
 获取object头信息
@@ -106,7 +102,7 @@ getObject({
 headObject({
   bucket: bucket,
   object: object
-}, function (err, result) {})
+}, function (err, result) {});
 ```
 
 获取object列表
@@ -121,14 +117,14 @@ listObject({
   marker: marker,
   delimiter: delimiter,
   maxKeys: maxKeys
-}, function (err, result) {})
+}, function (err, result) {});
 ```
 
 ### bucket
 
 列出所有bucket
 ```js
-listBucket(function (err) {})
+listBucket(function (err) {});
 ```
 
 创建bucket
@@ -136,17 +132,17 @@ listBucket(function (err) {})
 createBucket({
 	bucket: bucket,
 	acl: acl
-}, function (err) {})
+}, function (err) {});
 ```
 
 删除bucket
 ```js
-deleteBucket(bucket, function (err) {})
+deleteBucket(bucket, function (err) {});
 ```
 
 获取bucket访问规则
 ```js
-getBucketAcl(bucket, function (err, result) {})
+getBucketAcl(bucket, function (err, result) {});
 ```
 
 设置bucket访问规则
@@ -154,7 +150,7 @@ getBucketAcl(bucket, function (err, result) {})
 setBucketAcl({
 	bucket: bucket,
 	acl: acl
-}, function (err) {})
+}, function (err) {});
 ```
 
 ### License
