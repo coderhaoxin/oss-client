@@ -15,6 +15,13 @@ var option = {
   accessKeySecret: 'your access key secret'
 };
 
+/*
+ * host - default: oss.aliyuncs.com
+ * port - default: 8080
+ * timeout - default: 30000000
+ * agent - default: agent.maxSockets = 20
+ */
+
 var oss = new OSS.OssClient(option);
 ```
 
@@ -31,8 +38,10 @@ var oss = new OSS.OssClient(option);
 
 创建object(by: file path)
 ```js
-// srcFile: 上传的文件路径
-// userMetas: 可选，object类型，用户自定义header，如: x-oss-meta-location
+/*
+ * srcFile: 上传的文件路径
+ * userMetas: 可选，object类型，用户自定义header，如: x-oss-meta-location
+ */
 putObject({
   bucket: bucket,
   object: object,
@@ -44,9 +53,9 @@ putObject({
 创建object(by: buffer)
 ```js
 /*
-* userMetas: 可选，object类型，用户自定义header，如: x-oss-meta-location
-* contentType: 可选，但推荐添加(buffer无法自动获取contentType)
-*/
+ * userMetas: 可选，object类型，用户自定义header，如: x-oss-meta-location
+ * contentType: 可选，但推荐添加(buffer无法自动获取contentType)
+ */
 
 oss.putObject({
   bucket: bucket,
@@ -58,7 +67,9 @@ oss.putObject({
 
 创建object(by: stream)
 ```js
-// userMetas: 可选，object类型，用户自定义header，如: x-oss-meta-location
+/*
+ * userMetas: 可选，object类型，用户自定义header，如: x-oss-meta-location
+ */
 var input = fs.createReadStream(__filename);
 oss.putObject({
   bucket: bucket,
@@ -87,8 +98,10 @@ deleteObject({
 
 获取object
 ```js
-// dstFile: 保存object的文件路径
-// userHeaders: 可选，object类型，用户自定义header，如If-Unmodified-Since
+/*
+ * dstFile: 保存object的文件路径
+ * userHeaders: 可选，object类型，用户自定义header，如 If-Unmodified-Since
+ */
 getObject({
   bucket: bucket,
   object: object,
@@ -107,10 +120,12 @@ headObject({
 
 获取object列表
 ```js
-// prefix: 可选，object 前缀
-// marker: 可选，列表起始object
-// delimiter: 可选，object分组字符，若'/'为则不列出路径深度大于等于二层的object。
-// maxKeys: 可选， 列出的object最大个数
+/*
+ * prefix: 可选，object 前缀
+ * marker: 可选，列表起始object
+ * delimiter: 可选，object分组字符，若为 '/' 则不列出路径深度大于等于二层的object
+ * maxKeys: 可选， 列出的object最大个数
+ */
 listObject({
   bucket: bucket,
   prefix: prefix,
@@ -130,8 +145,8 @@ listBucket(function (err) {});
 创建bucket
 ```js
 createBucket({
-	bucket: bucket,
-	acl: acl
+  bucket: bucket,
+  acl: acl
 }, function (err) {});
 ```
 
@@ -148,8 +163,8 @@ getBucketAcl(bucket, function (err, result) {});
 设置bucket访问规则
 ```js
 setBucketAcl({
-	bucket: bucket,
-	acl: acl
+  bucket: bucket,
+  acl: acl
 }, function (err) {});
 ```
 
