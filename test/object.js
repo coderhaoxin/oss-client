@@ -1,15 +1,17 @@
 'use strict';
 
-var fs = require('fs'),
-  OSS = require('../index'),
-  config = require('./config'),
-  oss = new OSS.OssClient(config),
+var config = require('./config'),
+  uuid = require('node-uuid'),
+  crypto = require('crypto'),
   should = require('should'),
-  uuid = require('node-uuid');
+  OSS = require('..'),
+  fs = require('fs');
 
 describe('object', function() {
-  var bucket = uuid.v4(),
-    object = uuid.v4();
+  var oss = OSS.create(config),
+    bucket = uuid.v4(),
+    object = uuid.v4(),
+    object2 = uuid.v4();
 
   it('create bucket', function(done) {
     oss.createBucket({
@@ -17,12 +19,12 @@ describe('object', function() {
       acl: 'public-read'
     }, function(error, result) {
       should.not.exist(error);
-      result.statusCode.should.equal(200);
+      result.status.should.equal(200);
       done();
     });
   });
 
-  it('put object', function(done) {
+  it('put object with filepath', function(done) {
     oss.putObject({
       bucket: bucket,
       object: object,
@@ -31,7 +33,41 @@ describe('object', function() {
         'x-oss-meta-foo': 'bar'
       }
     }, function(error, result) {
-      result.statusCode.should.equal(200);
+      result.status.should.equal(200);
+      done();
+    });
+  });
+
+  it('put object with buffer', function(done) {
+    oss.putObject({
+      bucket: bucket,
+      object: object2,
+      srcFile: new Buffer('oss-client')
+    }, function(error, result) {
+      result.status.should.equal(200);
+      done();
+    });
+  });
+
+  it('put object - invalid srcFile', function(done) {
+    oss.putObject({
+      bucket: bucket,
+      object: object,
+      srcFile: '/xxoo'
+    }, function(error) {
+      error.message.should.equal('ENOENT, stat \'/xxoo\'');
+      done();
+    });
+  });
+
+  it('copy object', function(done) {
+    oss.copyObject({
+      bucket: bucket,
+      object: 'copy-' + object,
+      srcObject: object
+    }, function(error, result) {
+      should.not.exist(error);
+      should.exist(result.CopyObjectResult);
       done();
     });
   });
@@ -47,18 +83,50 @@ describe('object', function() {
   });
 
   it('download object to write stream', function(done) {
-    var ws = fs.createWriteStream('/tmp/oss-test-download-file');
+    var filepath = __dirname + '/ooxx.swp',
+      ws = fs.createWriteStream(filepath);
+
     oss.getObject({
       bucket: bucket,
       object: object,
-      dstFile: ws,
+      dstFile: ws
     }, function(error, result) {
       should.not.exist(error);
       result.should.eql({
-        statusCode: 200
+        status: 200
       });
-      fs.statSync('/tmp/oss-test-download-file').size.should.equal(fs.statSync(__filename).size);
-      fs.readFileSync('/tmp/oss-test-download-file', 'utf8').should.equal(fs.readFileSync(__filename, 'utf8'));
+      fs.statSync(filepath).size.should.equal(fs.statSync(__filename).size);
+      fs.readFileSync(filepath, 'utf8').should.equal(fs.readFileSync(__filename, 'utf8'));
+      done();
+    });
+  });
+
+  it('download object to file path', function(done) {
+    var filepath = __dirname + '/xxoo.swp';
+
+    oss.getObject({
+      bucket: bucket,
+      object: object,
+      dstFile: filepath
+    }, function(error, result) {
+      should.not.exist(error);
+      result.should.eql({
+        status: 200
+      });
+      fs.statSync(filepath).size.should.equal(fs.statSync(__filename).size);
+      fs.readFileSync(filepath, 'utf8').should.equal(fs.readFileSync(__filename, 'utf8'));
+      done();
+    });
+  });
+
+  it('get object without dstFile', function(done) {
+    oss.getObject({
+      bucket: bucket,
+      object: object2,
+    }, function(error, result) {
+      should.not.exist(error);
+      result.statusCode.should.equal(200);
+      result.body.toString().should.equal('oss-client');
       done();
     });
   });
@@ -72,12 +140,46 @@ describe('object', function() {
     });
   });
 
+  it('list object with params', function(done) {
+    oss.listObject({
+      bucket: bucket,
+      prefix: 'test',
+      marker: object,
+      delimiter: '/',
+      maxKeys: 30
+    }, function(error, result) {
+      should.not.exist(error);
+      should.exist(result.ListBucketResult);
+      done();
+    });
+  });
+
   it('delete object', function(done) {
     oss.deleteObject({
       bucket: bucket,
       object: object
     }, function(error, result) {
-      result.statusCode.should.equal(204);
+      result.status.should.equal(204);
+      done();
+    });
+  });
+
+  it('delete copy object', function(done) {
+    oss.deleteObject({
+      bucket: bucket,
+      object: 'copy-' + object
+    }, function(error, result) {
+      result.status.should.equal(204);
+      done();
+    });
+  });
+
+  it('delete object2', function(done) {
+    oss.deleteObject({
+      bucket: bucket,
+      object: object2
+    }, function(error, result) {
+      result.status.should.equal(204);
       done();
     });
   });
@@ -93,7 +195,7 @@ describe('object', function() {
         'Cache-Control': 'max-age=5'
       }
     }, function(error, result) {
-      result.statusCode.should.equal(200);
+      result.status.should.equal(200);
       done();
     });
   });
@@ -103,7 +205,7 @@ describe('object', function() {
       bucket: bucket,
       object: object
     }, function(error, result) {
-      result.statusCode.should.equal(204);
+      result.status.should.equal(204);
       done();
     });
   });
@@ -116,7 +218,7 @@ describe('object', function() {
       object: object,
       srcFile: new Buffer('hello,wolrd', 'utf8')
     }, function(error, result) {
-      result.statusCode.should.equal(200);
+      result.status.should.equal(200);
       done();
     });
   });
@@ -126,7 +228,7 @@ describe('object', function() {
       bucket: bucket,
       object: object
     }, function(error, result) {
-      result.statusCode.should.equal(204);
+      result.status.should.equal(204);
       done();
     });
   });
@@ -139,9 +241,10 @@ describe('object', function() {
       bucket: bucket,
       object: object,
       srcFile: input,
+      md5: crypto.createHash('md5').update(fs.readFileSync(__filename, 'utf8')).digest('base64'),
       contentLength: fs.statSync(__filename).size
     }, function(error, result) {
-      result.statusCode.should.equal(200);
+      result.status.should.equal(200);
       done();
     });
   });
@@ -151,7 +254,7 @@ describe('object', function() {
       bucket: bucket,
       object: object
     }, function(error, result) {
-      result.statusCode.should.equal(204);
+      result.status.should.equal(204);
       done();
     });
   });
@@ -159,7 +262,7 @@ describe('object', function() {
   it('delete bucket', function(done) {
     oss.deleteBucket(bucket, function(error, result) {
       should.not.exist(error);
-      result.statusCode.should.equal(204);
+      result.status.should.equal(204);
       done();
     });
   });

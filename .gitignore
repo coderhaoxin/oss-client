@@ -1,6 +1,5 @@
-.DS_Store
+coverage/
+node_modules/
 npm-debug.log
-node_modules
 test/config.js
-coverage.html
 *.swp

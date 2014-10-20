@@ -1,18 +1,11 @@
 {
   "name": "oss-client",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "aliyun oss client for node.js",
   "main": "index.js",
   "scripts": {
-    "test": "make test-all"
-  },
-  "config": {
-    "blanket": {
-      "pattern": "oss-client/lib/oss.js"
-    },
-    "travis-cov": {
-      "threshold": 90
-    }
+    "test": "node_modules/.bin/mocha --harmony -R spec -t 5000 test/*.js",
+    "test-cov": "node --harmony node_modules/.bin/istanbul cover node_modules/.bin/_mocha -- -R dot -t 5000 test/*.js"
   },
   "repository": {
     "type": "git",
@@ -20,26 +13,28 @@
   },
   "keywords": [
     "aliyun",
-    "oss",
-    "client"
+    "client",
+    "oss"
+  ],
+  "files": [
+    "lib"
   ],
   "author": "haoxin",
   "license": "MIT",
   "dependencies": {
-    "mime": "~1.2.11",
-    "xml2js": "~0.4.1"
+    "mime-types": "2",
+    "thunkify-or-promisify": "0",
+    "xml2js": "^0.4.4"
   },
   "directories": {
     "test": "test"
   },
   "devDependencies": {
-    "blanket": "*",
-    "should": "*",
+    "co": "*",
+    "istanbul-harmony": "*",
     "mocha": "*",
-    "travis-cov": "*",
-    "coveralls": "*",
-    "mocha-lcov-reporter": "*",
-    "node-uuid": "*"
+    "node-uuid": "*",
+    "should": "*"
   },
   "bugs": {
     "url": "https://github.com/coderhaoxin/oss-client/issues"

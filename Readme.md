@@ -1,6 +1,10 @@
-[![NPM](https://nodei.co/npm/oss-client.png?downloads=true)](https://nodei.co/npm/oss-client/)
+[![NPM version][npm-img]][npm-url]
+[![License][license-img]][license-url]
+[![Dependency status][david-img]][david-url]
 
-### a node.js module to connect aliyun oss
+### oss-client
+a node.js module to connect aliyun oss, friendly with **co**, **koa** ...
+
 ```bash
 npm install oss-client
 ```
@@ -11,8 +15,8 @@ npm install oss-client
 ```js
 var OSS = require('oss-client');
 var option = {
-  accessKeyId: 'your access key id',
-  accessKeySecret: 'your access key secret'
+  accessKeyId: 'access key id',
+  accessKeySecret: 'access key secret'
 };
 
 /*
@@ -22,7 +26,7 @@ var option = {
  * agent - default: agent.maxSockets = 20
  */
 
-var oss = new OSS.OssClient(option);
+var oss = OSS.create(option);
 ```
 
 参数说明：
@@ -168,5 +172,30 @@ setBucketAcl({
 }, function (err) {});
 ```
 
+### use with `co` or `koa`
+
+```js
+var option = {
+  wrapper: 'thunk', // or: promise
+  accessKeyId: '',
+  accessKeySecret: ''
+};
+
+var oss = OSS.create(option);
+
+// in co or koa
+yield oss.listBucket();
+```
+
+### Coverage
+97%
+
 ### License
 MIT
+
+[npm-img]: https://img.shields.io/npm/v/oss-client.svg?style=flat-square
+[npm-url]: https://npmjs.org/package/oss-client
+[license-img]: https://img.shields.io/badge/license-MIT-green.svg?style=flat-square
+[license-url]: http://opensource.org/licenses/MIT
+[david-img]: https://img.shields.io/david/coderhaoxin/oss-client.svg?style=flat-square
+[david-url]: https://david-dm.org/coderhaoxin/oss-client
