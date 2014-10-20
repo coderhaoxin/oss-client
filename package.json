@@ -1,6 +1,6 @@
 {
   "name": "oss-client",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "aliyun oss client for node.js",
   "main": "index.js",
   "scripts": {
@@ -17,10 +17,9 @@
     "oss"
   ],
   "files": [
+    "index.js",
     "lib"
   ],
-  "author": "haoxin",
-  "license": "MIT",
   "dependencies": {
     "mime-types": "2",
     "thunkify-or-promisify": "0",
@@ -39,5 +38,7 @@
   "bugs": {
     "url": "https://github.com/coderhaoxin/oss-client/issues"
   },
+  "author": "haoxin",
+  "license": "MIT",
   "homepage": "https://github.com/coderhaoxin/oss-client"
 }
