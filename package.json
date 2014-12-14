@@ -1,6 +1,6 @@
 {
   "name": "oss-client",
-  "version": "0.5.1",
+  "version": "0.6.0",
   "description": "aliyun oss client for node.js",
   "main": "lib/oss.js",
   "scripts": {

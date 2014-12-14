@@ -196,7 +196,7 @@ yield oss.listBucket();
 ```
 
 ### Coverage
-97%
+98%
 
 ### License
 MIT
