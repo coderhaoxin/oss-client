@@ -172,6 +172,14 @@ setBucketAcl({
 }, function (err) {});
 ```
 
+### utils
+
+getUrlAuthorization - 在 URL 中包含签名
+```js
+var auth = getUrlAuthorization(bucket, object, expireSecond);
+// http://bucket.oss-cn-hangzhou.aliyuncs.com/object?auth
+```
+
 ### use with `co` or `koa`
 
 ```js

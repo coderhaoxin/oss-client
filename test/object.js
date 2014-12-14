@@ -4,6 +4,7 @@ var config = require('./config'),
   uuid = require('node-uuid'),
   crypto = require('crypto'),
   should = require('should'),
+  http = require('http'),
   OSS = require('..'),
   fs = require('fs');
 
@@ -249,6 +250,23 @@ describe('object', function() {
     });
   });
 
+  var auth = oss.getUrlAuthorization(bucket, object, 5);
+  var path = '/' + object + '?' + auth;
+
+  it('get object by url authorization should success', function(done) {
+    get(bucket + '.' + oss.host, path, function(status) {
+      status.should.equal(200);
+      setTimeout(done, 5000);
+    });
+  });
+
+  it('get object by url authorization should 403', function(done) {
+    get(bucket + '.' + oss.host, path, function(status) {
+      status.should.equal(403);
+      done();
+    });
+  });
+
   it('delete object', function(done) {
     oss.deleteObject({
       bucket: bucket,
@@ -267,3 +285,15 @@ describe('object', function() {
     });
   });
 });
+
+/**
+ * utils
+ */
+function get(host, path, cb) {
+  http.get({
+    host: host,
+    path: path
+  }, function(res) {
+    cb(res.statusCode);
+  });
+}
