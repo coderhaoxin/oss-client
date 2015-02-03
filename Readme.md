@@ -3,7 +3,10 @@
 [![Dependency status][david-img]][david-url]
 
 ### oss-client
-a node.js module to connect aliyun oss, friendly with **co**, **koa** ...
+
+* A node.js module to connect aliyun oss
+* Supports both **callback** and **promise** style base on [thenify](https://github.com/thenables/thenify)
+* Friendly with **co**, **koa**, ES7 `async/await`
 
 ```bash
 npm install oss-client
@@ -14,7 +17,7 @@ npm install oss-client
 ### how to use
 ```js
 var OSS = require('oss-client');
-var option = {
+var options = {
   accessKeyId: 'access key id',
   accessKeySecret: 'access key secret'
 };
@@ -26,7 +29,7 @@ var option = {
  * agent - default: agent.maxSockets = 20
  */
 
-var oss = OSS.create(option);
+var oss = OSS.create(options);
 ```
 
 参数说明：
@@ -52,6 +55,14 @@ putObject({
   srcFile: srcFile,
   userMetas: userMetas //optional
 }, function (err) {});
+
+// or promise style
+putObject({
+  bucket: bucket,
+  object: object,
+  srcFile: srcFile,
+  userMetas: userMetas //optional
+}).then(...).catch(...);
 ```
 
 创建object(by: buffer)
@@ -66,7 +77,7 @@ oss.putObject({
   object: object,
   srcFile: new Buffer("hello,wolrd", "utf8"),
   contentType: 'image/jpeg'
-}, function (error, result) {});
+}, function (err, result) {});
 ```
 
 创建object(by: stream)
@@ -80,7 +91,7 @@ oss.putObject({
   object: object,
   srcFile: input,
   contentLength: fs.statSync(__filename).size
-}, function (error, result) {});
+}, function (err, result) {});
 ```
 
 复制object
@@ -178,21 +189,6 @@ getUrlAuthorization - 在 URL 中包含签名
 ```js
 var auth = getUrlAuthorization(bucket, object, expireSecond);
 // http://bucket.oss-cn-hangzhou.aliyuncs.com/object?auth
-```
-
-### use with `co` or `koa`
-
-```js
-var option = {
-  wrapper: 'thunk', // or: promise
-  accessKeyId: '',
-  accessKeySecret: ''
-};
-
-var oss = OSS.create(option);
-
-// in co or koa
-yield oss.listBucket();
 ```
 
 ### Coverage

@@ -28,6 +28,12 @@ describe('bucket', function() {
     });
   });
 
+  it('list bucket - promise', function() {
+    return oss.listBucket().then(function(result) {
+      result.ListAllMyBucketsResult.should.have.keys('Owner', 'Buckets');
+    });
+  });
+
   it('get bucket acl', function(done) {
     oss.getBucketAcl(bucketName, function(error, result) {
       should.not.exist(error);

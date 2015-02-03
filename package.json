@@ -1,17 +1,18 @@
 {
   "name": "oss-client",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "aliyun oss client for node.js",
   "main": "lib/oss.js",
   "scripts": {
-    "test": "node_modules/.bin/mocha --harmony -R spec -t 10000 test/*.js",
-    "test-cov": "node --harmony node_modules/.bin/istanbul cover node_modules/.bin/_mocha -- -R dot -t 10000 test/*.js"
+    "test": "mocha -R spec -t 10000 test/*.js",
+    "test-cov": "istanbul cover node_modules/.bin/_mocha -- -R dot -t 10000 test/*.js"
   },
   "repository": {
     "type": "git",
     "url": "https://github.com/coderhaoxin/oss-client.git"
   },
   "keywords": [
+    "promise",
     "aliyun",
     "client",
     "oss"
@@ -21,15 +22,14 @@
   ],
   "dependencies": {
     "mime-types": "2",
-    "thunkify-or-promisify": "0",
+    "thenify": "3",
     "xml2js": "^0.4.4"
   },
   "directories": {
     "test": "test"
   },
   "devDependencies": {
-    "co": "*",
-    "istanbul-harmony": "*",
+    "istanbul": "*",
     "mocha": "*",
     "node-uuid": "*",
     "should": "*"
