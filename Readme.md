@@ -1,3 +1,6 @@
+## deprecated
+## Please use [ali-oss](https://github.com/ali-sdk/ali-oss), [npm](https://www.npmjs.com/package/ali-oss)
+
 [![NPM version][npm-img]][npm-url]
 [![License][license-img]][license-url]
 [![Dependency status][david-img]][david-url]
